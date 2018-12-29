@@ -10,18 +10,56 @@
                 <th>type</th>
                 <th>reviewed_aspect</th>
                 <th>creator</th>
+                <th>reviewed</th>
                 <th>reviewer</th>
+                <th>approved</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in data %}
+           {% for review_item in review_items %}
             <tr>
-                <td>{{item[0]}}</td>
-                <td>{{item[1]}}</td>
-                <td>{{item[2]}}</td>
-                <td>{{item[3]}}</td>
-                <td>{{item[4]}}</td>
-                <td>{{item[5]}}</td>
+                <td>{{review_item.creation_date|datetime('medium')}}</td>
+                <td>{{review_item.name}}</td>
+                <td>{{review_item.review_type.name}}</td>
+                <td>{{review_item.reviewed_aspect}}</td>
+                <td>{{review_item.creator.name}}</td>
+                <!--
+                <td>reviews: {{review_item.reviews|length}}</td>
+                -->
+
+                {% if review_item.reviews|length > 0 %}
+                    {% for review in review_item.reviews %}
+                        {% if loop.index == 1 %}
+                            <td><span class = "review-text">{{review.review_date}}</span></td>
+                            <td><span class = "review-text">{{review.reviewer.name}}</span></td>
+                            {% if review.approved == true %}
+                                <td><span class = "review-text">{{review.approved}}</span></td>
+                            {% else %}
+                                <td><span class = "warning">{{review.approved}}</span></td>
+                            {% endif %}
+                        {% else %}
+                            <tr>
+                                <!-- <td>{{loop.index}}</td> -->
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td><span class = "review-text">{{review.review_date}}</span></td>
+                                <td><span class = "review-text">{{review.reviewer.name}}</span></td>
+                                {% if review.approved == true %}
+                                    <td><span class = "review-text">{{review.approved}}</span></td>
+                                {% else %}
+                                    <td><span class = "warning">{{review.approved}}</span></td>
+                                {% endif %}
+                           </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <td><span class = "warning">no review</span></td>
+                    <td></td>
+                    <td></td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>

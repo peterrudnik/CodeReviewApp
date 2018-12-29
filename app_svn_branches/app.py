@@ -17,6 +17,7 @@ import secrets
 from app_svn_branches.config import Config
 from app_svn_branches.forms import LoginForm
 from flask import render_template, flash, redirect
+import babel
 import subprocess
 
 DATE_FMT = '%Y.%m.%d %H:%M'
@@ -37,7 +38,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 #auth = HTTPTokenAuth(scheme='Token')
 db = SQLAlchemy(app)
-a = SQLAlchemy
+#a = SQLAlchemy
 
 #===============================================================================
 # models
@@ -51,16 +52,28 @@ class User(db.Model):
     from_date = db.Column(db.DateTime, nullable=True)
     to_date = db.Column(db.DateTime, nullable=True)
     note = db.Column(db.Unicode, nullable=True)
+    review_item = db.relationship("ReviewItem", back_populates='creator')  # the first argument references the class not the table!!!!!!
+    reviewer = db.relationship("Review", back_populates='reviewer')
+
+class ReviewType(db.Model):
+    __tablename__ = 'review_type'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Unicode, nullable=False,  unique=True)
+    review_item = db.relationship("ReviewItem", back_populates='review_type', lazy=True)
+
 
 class ReviewItem(db.Model):
     __tablename__ = 'review_item'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode, nullable=False,  unique=True)
-    type = db.Column(db.Unicode, nullable=False)
+    review_type_id = db.Column(db.Integer, db.ForeignKey('review_type.id'), nullable=False)
     reviewed_aspect = db.Column(db.Unicode, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False)
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    #The following line says: populate Review.review_item it with members froms this class: a list or a single member
     reviews = db.relationship("Review", back_populates='review_item', lazy=True)# the first argument references the class not the table!!!!!!
+    review_type = db.relationship("ReviewType", back_populates='review_item', lazy=True)
+    creator = db.relationship("User", back_populates='review_item', lazy=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,6 +104,7 @@ class Review(db.Model):
     reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     review_item_id = db.Column(db.Integer, db.ForeignKey('review_item.id'), nullable=False)
     review_item = db.relationship("ReviewItem", back_populates='reviews')# the first argument references the class not the table!!!!!!
+    reviewer = db.relationship("User", back_populates='reviewer', lazy=True)
 
     def to_dict(self):
         return {
@@ -110,11 +124,20 @@ class Review(db.Model):
 #
 #===============================================================================
 
+def format_datetime(value, format='medium'):
+    if format == 'full':
+        format="EEEE, d. MMMM y 'at' HH:mm"
+    elif format == 'medium':
+        format="EE dd.MM.y HH:mm"
+    #return babel.dates.format_datetime(value, format)
+    if value and isinstance(value,datetime):
+        return value.strftime(DATE_FMT)
+    else:
+        return "na"
+
+app.jinja_env.filters['datetime'] = format_datetime
 
 
-#===============================================================================
-#
-#===============================================================================
 def addReviewItemIfNotExists(review_item):
     item = ReviewItem.query.filter_by(name=review_item.name).first()
     if item is None:
@@ -123,7 +146,7 @@ def addReviewItemIfNotExists(review_item):
             nMax = 1
         review_item.id = nMax + 1
         db.session.add(review_item)
-        flash("""New item "{i}" has been added to the database.""".format(i=review_item.name))
+        flash("""New review item "{i}" has been added to the database.""".format(i=review_item.name))
 
 
 
@@ -154,10 +177,24 @@ def addUserIfNotExists(user):
 
     return ret
 
-#Test
+def showReviewItems():
+    review_items = ReviewItem.query.all()
+    for review_item in review_items:
+        #print(review_item.name)
+        print("review item {ri} created by {u} on {dt}".format(ri=review_item.name,u=review_item.creator.name, dt=review_item.creation_date.strftime(DATE_FMT)))
+        for review in review_item.reviews:
+            print("reviewed by {u} on {dt}".format(u=review.reviewer.name, dt = review.review_date.strftime(DATE_FMT)))
+
 def getData():
+    '''
+        @info: this function is not needed anymore because we do not need joins
+        The same can be accomplished through class relationships
+    :return:
+    '''
+
     users = User.query.all()
-    reviewed_items = ReviewItem.query.outerjoin(Review, ReviewItem.id == Review.review_item_id).order_by(ReviewItem.creation_date).add_columns(
+    #review_items = ReviewItem.query.all()
+    review_items = ReviewItem.query.outerjoin(Review, ReviewItem.id == Review.review_item_id).order_by(ReviewItem.creation_date).add_columns(
         ReviewItem.creation_date,
         ReviewItem.name,
         ReviewItem.type,
@@ -167,14 +204,14 @@ def getData():
     #                                                                                          friendId).filter(
     #        users.id == friendships.friend_id).filter(friendships.user_id == userID).paginate(page, 1, False)
     data = list()
-    for reviewed_item in reviewed_items:
-        creation_date = reviewed_item[1].strftime(DATE_FMT)
-        name = reviewed_item[2]
-        type = reviewed_item[3]
-        reviewed_aspect = reviewed_item[4]
-        creator_id = reviewed_item[5]
-        reviewer_id = reviewed_item[6]
-        # print (reviewed_item)
+    for review_item in review_items:
+        creation_date = review_item[1].strftime(DATE_FMT)
+        name = review_item[2]
+        type = review_item[3]
+        reviewed_aspect = review_item[4]
+        creator_id = review_item[5]
+        reviewer_id = review_item[6]
+        # print (review_item)
         creator = ""
         reviewer = ""
         for user in users:
@@ -184,7 +221,7 @@ def getData():
                 reviewer = user.name
         data.append([creation_date, name, type, reviewed_aspect, creator, reviewer])
         #select * from review_item where id not in (select review_item_id from review)
-    #This is not necessary because of the outjoin above
+    #This is not necessary because of the outerjoin above
     #lst = Review.query.with_entities(Review.id).all()
     #unreviewed_items = db.engine.execute("select id, name, type reviewed_aspect,creation_date, creator_id  from review_item where id not in (select review_item_id from review)")
     #unreviewed_items = ReviewItem.query.filter_by(username='peter').first()
@@ -205,6 +242,7 @@ def update_from_repository():
     #remove empty strings
     #nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
     repository_data = list(filter(lambda x: len(x.strip()) > 0, lst))
+    repository_data = list(filter(lambda x: x.startswith("#") == False, repository_data))
     for line in repository_data:
         fields = line.split(';')
         review_item_create_date = datetime.strptime(fields[0], INCOMING_DATE_FMT)
@@ -230,7 +268,12 @@ def helloWorldHandler():
 
 @app.route('/index')
 def index():
-    return render_template('reviewed_items.html', title='Code reviews', data=getData())
+    #review_items = ReviewItem.query.order_by(ReviewItem.creation_date).all()
+    review_items = ReviewItem.query.order_by(ReviewItem.creation_date).all()
+    review_items = ReviewItem.query.outerjoin(Review, ReviewItem.id == Review.review_item_id).order_by(ReviewItem.creation_date, Review.review_date).all()
+
+    return render_template('reviewed_items.html', title='Code reviews', review_items=review_items)
+    #return render_template('reviewed_items.html', title='Code reviews', data=getData())
 
 
 @app.route('/update')
