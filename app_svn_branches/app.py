@@ -154,7 +154,7 @@ def addUserIfNotExists(user):
 
     return ret
 
-
+#Test
 def getData():
     users = User.query.all()
     reviewed_items = ReviewItem.query.outerjoin(Review, ReviewItem.id == Review.review_item_id).order_by(ReviewItem.creation_date).add_columns(
