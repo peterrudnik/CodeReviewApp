@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     <title>{{title}}</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         body {
           font-family: Arial, Helvetica, sans-serif;
@@ -30,9 +31,21 @@
             font-size: 8px;
             color: red;
         }
-        .review-text {
+        .error {
+            font-size: 11px;
+            color: red;
+        }
+       .action {
             font-size: 15px;
             color: blue;
+        }
+        .review-item-text {
+            font-size: 12px;
+            color: `black;
+        }
+        .review-text {
+            font-size: 12px;
+            color: DarkOliveGreen;
         }
         table {
           font-family: arial, sans-serif;
@@ -48,6 +61,18 @@
 
         tr:nth-child(even) {
           background-color: #dddddd;
+        }
+        .new-icon {
+            font-size:12px;color:blue;
+            }
+        .edit-icon {
+            font-size:12px;color:blue;
+            }
+        .trash-icon {
+            font-size:12px;color:blue;
+        }
+        .sort-icon {
+            font-size:10px;color:blue;
         }
     </style>
 
@@ -66,9 +91,10 @@
     <body>
    <div class="pill-nav" id="header">
       <a class="active" href="/index">Overview</a>
-      <a href="/reviews">Reviews</a>
+      <a href="/results">Results</a>
       <a href="/participation">Participation</a>
       <a href="/update">Update from repository</a>
+      <a href="/new_review_item">New review item</a>
       <a href="/users">Users</a>
       <a href="/about">About</a>
     </div>

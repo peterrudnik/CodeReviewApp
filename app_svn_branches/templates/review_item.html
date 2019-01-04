@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+    <table id="main">
+        <thead>
+            <tr>
+                <th>field</th>
+                <th>value</th>
+            </tr>
+        </thead>
+        <tbody>
+           <tr>
+               <td><span class="action"> {{ action_text }}</span></td>
+            </tr>
+
+            <tr>
+                <td>{{ form.created.label }}</td>
+                <td>{{ form.created() }}</td>
+            </tr>
+           {% if action != "edit" %}
+           <tr>
+               <td>{{ form.review_item.label }}</td>
+                <td>{{ form.review_item() }}</td>
+            </tr>
+           {% endif %}
+           <tr>
+                <td>{{ form.creator.label }}</td>
+                <td>{{ form.creator() }}</td>
+            </tr>
+           <tr>
+           <tr>
+                <td>{{ form.review_type.label }}</td>
+                <td>{{ form.review_type() }}</td>
+            </tr>
+           </tr>
+           <tr>
+                <td>{{ form.reviewed_aspect.label }}</td>
+                <td>{{ form.reviewed_aspect(size=32) }}</td>
+            </tr>
+           <tr>
+               <td></td>
+                <td>{{ form.submit() }}</td>
+           </tr>
+            {% for message in get_flashed_messages() %}
+                   <tr>
+                       <td></td>
+                        <td><div class="error"><p>{{ message }}</p></div></td>
+                   </tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+    </form>
+
+{% endblock %}

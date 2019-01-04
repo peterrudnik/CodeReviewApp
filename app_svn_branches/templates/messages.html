@@ -16,6 +16,10 @@
                             <td>{{ message }}</td>
                         </tr>
                   {% endfor %}
+               {% else %}
+                    <tr>
+                        <td>No new messages.</td>
+                    </tr>
                {% endif %}
             {% endwith %}
         </tbody>
