@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="" method="post" novalidate>
+       {# {{ form.hidden_tag() }} #}
+    <table id="main">
+        <thead>
+            <tr>
+                <th></th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creation_date/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creation_date/desc"></a> user</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/review_type/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/review_type/desc"></a> overall particpation</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/name/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/name/desc"></a> review items created</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creator/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creator/desc"></a>reviews completed</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/note"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/note"></a> note</th>
+                <th></th>
+                 <th>note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, value in userEvaluations.items() %}
+                <tr>
+                    <td></td>
+                    <td>{{ value.user.name }}</td>
+                    <td>{{ value.count }}</td>
+                    <td>{{ value.review_item_creator_count }}</td>
+                    <td>{{ value.review_count }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+    </form>
+
+{% endblock %}

@@ -658,6 +658,30 @@ def delete_review(id):
         return render_template('review.html', action = "delete", action_text=action_text, form = form)
 
 
+class UserEvaluation(object):
+    def __init__(self,user):
+        self.user = user
+        self.review_item_creator_count = 0
+        self.review_count = 0
+        self.count = 0
+
+@app.route('/analysis', methods=['GET', 'POST'])
+def analysis():
+    users = User.query.all()
+    userEvaluations = dict()
+    for user in users:
+        userEvaluations[user.name] = UserEvaluation(user)
+
+    review_items = ReviewItem.query.all()
+    for review_item in review_items:
+        userEvaluations[review_item.creator.name].review_item_creator_count += 1
+        userEvaluations[review_item.creator.name].count += 1
+    reviews = Review.query.all()
+    for review in reviews:
+        userEvaluations[review.reviewer.name].review_count += 1
+        userEvaluations[review.reviewer.name].count += 1
+    return render_template('analysis.html',userEvaluations=userEvaluations)
+
 
 #@app.route('/mylogin')
 #def mylogin():
