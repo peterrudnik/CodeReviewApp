@@ -8,11 +8,15 @@ Created on 21.12.2018
 from datetime import datetime
 from flask import Flask, jsonify, request, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import aliased
+#from flask_mysqldb import MySQL
 from flask_httpauth import HTTPTokenAuth
 import json
 from passlib.hash import pbkdf2_sha256 as hasher
 from datetime import datetime
-import secrets
+import dateutil.rrule as rrule
+import calendar
+#import secrets
 #from app_svn_branches.config import Config
 from app_svn_branches.config import Config
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
@@ -40,6 +44,14 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 #a = SQLAlchemy
 
+
+#===============================================================================
+# utilities
+#===============================================================================
+def getBeginningAndEndOfMonth(dt):
+    days = calendar.monthrange(dt.year,dt.month)
+    return dt.replace(day=1),dt.replace(day=days[1])
+
 #===============================================================================
 # models
 #===============================================================================
@@ -47,27 +59,27 @@ db = SQLAlchemy(app)
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode, nullable=False)
-    shortname = db.Column(db.Unicode, nullable=False, unique=True)
+    name = db.Column(db.Unicode(64), nullable=False)
+    shortname = db.Column(db.Unicode(64), nullable=False, unique=True)
     from_date = db.Column(db.DateTime, nullable=True)
     to_date = db.Column(db.DateTime, nullable=True)
-    note = db.Column(db.Unicode, nullable=True)
+    note = db.Column(db.Unicode(64), nullable=True)
     review_item = db.relationship("ReviewItem", back_populates='creator')  # the first argument references the class not the table!!!!!!
     reviewer = db.relationship("Review", back_populates='reviewer')
 
 class ReviewType(db.Model):
     __tablename__ = 'review_type'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode, nullable=False,  unique=True)
+    name = db.Column(db.Unicode(64), nullable=False,  unique=True)
     review_item = db.relationship("ReviewItem", back_populates='review_type', lazy=True)
 
 
 class ReviewItem(db.Model):
     __tablename__ = 'review_item'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode, nullable=False,  unique=True)
+    name = db.Column(db.Unicode(64), nullable=False,  unique=True)
     review_type_id = db.Column(db.Integer, db.ForeignKey('review_type.id'), nullable=False)
-    reviewed_aspect = db.Column(db.Unicode, nullable=False)
+    reviewed_aspect = db.Column(db.Unicode(64), nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False)
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     #The following line says: populate Review.review_item it with members froms this class: a list or a single member
@@ -76,7 +88,7 @@ class ReviewItem(db.Model):
     creator = db.relationship("User", back_populates='review_item', lazy=True)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(ReviewItem).__init__(*args, **kwargs)
         #self.date_joined = datetime.now()
         #self.token = secrets.token_urlsafe(64)
 
@@ -100,6 +112,12 @@ class ReviewItem(db.Model):
         flash('reviewed aspect: {}'.format(self.reviewed_aspect))
         flash('creator        : {}'.format(creator.shortname))
 
+    def getReviewCount(self):
+        return len(self.reviews)
+
+    def hasReviews(self):
+        return (len(self.reviews)>0)
+
     def __repr__(self):
         return "<ReviewItem: {} | reviews: {}>".format(self.name, len(self.reviews))
 
@@ -107,7 +125,7 @@ class ReviewItem(db.Model):
 class Review(db.Model):
     __tablename__ = 'review'
     id = db.Column(db.Integer, primary_key=True)
-    note = db.Column(db.Unicode, nullable=True)
+    note = db.Column(db.Unicode(64), nullable=True)
     review_date = db.Column(db.DateTime, nullable=False)
     approved = db.Column(db.Boolean, default=True)
     reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -130,7 +148,7 @@ class Review(db.Model):
 
 
 #===============================================================================
-#
+#  jinja setup
 #===============================================================================
 
 def format_datetime(value, format='medium'):
@@ -146,6 +164,9 @@ def format_datetime(value, format='medium'):
 
 app.jinja_env.filters['datetime'] = format_datetime
 
+#===============================================================================
+#  database queries
+#===============================================================================
 def getReviewItem(name = None, id = None):
     item = None
     if name is not None:
@@ -272,7 +293,7 @@ def addReview(review, flash_details = False):
                 flashReview(review)
             ret = True
         else:
-            flash("""review item "{i}" already exists in the database.""".format(i=review_item.name))
+            flash("""review "{i}" already exists in the database.""".format(i=review.id))
     except Exception as e:
         flash(str(e))
     return ret
@@ -403,6 +424,10 @@ def getData():
     return data
 """
 
+#===============================================================================
+#  import
+#===============================================================================
+
 def update_from_repository():
     #result = subprocess.run([repository_cmd, ''], stdout=subprocess.PIPE)
     #print (result.stdout)
@@ -441,6 +466,189 @@ def update_from_repository():
             count +=1
     if count == 0:
          flash("No new items found in repository!")
+
+#===============================================================================
+# analysis
+#===============================================================================
+
+class ReviewInterval(object):
+    def __init__(self,name, startdate,enddate):
+        self.name = name
+        self.startDate = startdate
+        self.endDate = enddate
+        self.review_item_creator_count = 0
+        self.review_count = 0
+        self.participation_count = 0
+        
+    def evaluate_review_item(self,dt):    
+        if dt >= self.startDate and dt <= self.endDate:
+            self.review_item_creator_count += 1
+            self.participation_count += 1
+
+    def evaluate_review(self,dt):    
+        if dt >= self.startDate and dt <= self.endDate:
+            self.review_count += 1
+            self.participation_count += 1
+
+class UserEvaluation(object):
+    def __init__(self,user):
+        self.user = user
+        self.review_intervals = list()
+
+    def getReviewInterval(self,interval_name):
+        ret = None
+        for review_interval in self.review_intervals:
+            if review_interval.name == interval_name:
+                ret = review_interval
+                break
+        return ret
+
+def getReviewIntervals(startdate,enddate):
+    lst = list()
+    name = "all"
+    lst.append(ReviewInterval(name, startdate, enddate))
+    dt_year_range = rrule.rrule(rrule.YEARLY, dtstart=startdate, until=enddate)
+    for dt in dt_year_range:
+        name = dt.strftime("%Y")
+        period_startdate, period_enddate = getBeginningAndEndOfMonth(dt)
+        lst.append(ReviewInterval(name,period_startdate, period_enddate))
+
+    dt_month_range = rrule.rrule(rrule.MONTHLY, dtstart=startdate,until=enddate)
+    for dt in dt_month_range:
+        name = "{m}/{y}".format(m=dt.strftime("%b"),y=dt.strftime("%Y"))
+        period_startdate, period_enddate = getBeginningAndEndOfMonth(dt)
+        lst.append(ReviewInterval(name,period_startdate, period_enddate))
+    return lst
+
+class UserAnalysis(object):
+    def __init__(self,users, review_items, reviews):
+        self.users = users
+        self.review_items = review_items
+        self.reviews = reviews
+        self.startDate = None
+        self.endDate = None
+        self.userEvaluations = dict()
+        self.review_intervals = None
+        for user in users:
+            self.userEvaluations[user.name] = UserEvaluation(user)
+        if len(review_items):
+            for review_item in review_items:
+                if self.startDate is None or review_item.creation_date < self.startDate:
+                    self.startDate = review_item.creation_date
+                if self.endDate is None or review_item.creation_date > self.endDate:
+                    self.endDate = review_item.creation_date
+        if len(reviews):
+            for review in reviews:
+                if self.startDate is None or review.review_date < self.startDate:
+                    self.startDate = review.review_date
+                if self.endDate is None or review.review_date > self.endDate:
+                    self.endDate = review.review_date
+        if self.startDate is not None and self.endDate is not None:
+            for user in users:
+                self.userEvaluations[user.name].review_intervals = getReviewIntervals(self.startDate, self.endDate)
+            for review_item in review_items:
+                for review_interval in self.userEvaluations[review_item.creator.name].review_intervals:
+                    review_interval.evaluate_review_item(review_item.creation_date)
+            for review in reviews:
+                for review_interval in self.userEvaluations[review.reviewer.name].review_intervals:
+                    review_interval.evaluate_review(review.review_date)
+
+    def getReviewInterval(self,user,interval_name):
+        ret = None
+        if user and user.name in self.userEvaluations.keys():
+            for review_interval in self.userEvaluations[user.name].review_intervals:
+                if review_interval.name == interval_name:
+                    ret = review_interval
+                    break
+        return ret
+
+    def getReviewIntervalNames(self):
+        ret = list()
+        if self.startDate is not None and self.endDate is not None:
+            lst = getReviewIntervals(self.startDate, self.endDate)
+            for item in lst:
+                ret.append(item.name)
+        return ret
+
+def getUserAnalysis():
+    """
+        gets user evaluations form db
+    :return: user evaluations
+    """
+    users = User.query.all()
+    review_items = ReviewItem.query.all()
+    reviews = Review.query.all()
+    userAnalysys = UserAnalysis(users, review_items, reviews)
+    return userAnalysys
+
+class Results(object):
+    def __init__(self,review_items, reviews):
+        self.review_items = review_items
+        self.reviews = reviews
+
+    def getReviewItemCount(self):
+        return len(self.review_items)
+
+    def getReviewCount(self):
+        return len(self.reviews)
+
+    def getReviewItemsWithoutReviewCount(self):
+        ret = 0
+        for review_item in self.review_items:
+            if len(review_item.reviews) == 0:
+                ret += 1
+        return ret
+
+    def getScore(self):
+        n = self.getReviewCount() + self.getReviewItemsWithoutReviewCount()
+        if (n) > 0:
+            ret = (float(self.getReviewCount()) / float(n)) * 100.0
+        else:
+            ret = 0
+        return ret
+
+    def getCoverageScore(self):
+        if self.getReviewItemCount() > 0:
+            f_without= float(self.getReviewItemsWithoutReviewCount())
+            f_count = float(self.getReviewItemCount())
+            ret = (f_without / f_count) * 100.0
+        else:
+            ret = 0
+        return ret
+
+    def getAverageReviewCountScore(self):
+        average_review_score = 0.0
+        if self.getReviewItemCount() > 0:
+            for review_item in self.review_items:
+                average_review_score += review_item.getReviewCount()
+            average_review_score /= float(self.getReviewItemCount())
+        return average_review_score
+
+    def getScoreString(self):
+        score = self.getScore()
+        return "Coverage {s:3.1f}% ({rin}/{ri}); number of reviews: {r}, review rate: {arc:3.3f}" \
+               "".format(s=self.getCoverageScore(),
+                         ri=self.getReviewItemCount(),
+                         rin=self.getReviewItemsWithoutReviewCount(),
+                         r=self.getReviewCount(),
+                         arc=self.getAverageReviewCountScore())
+
+def getResults():
+    review_items = ReviewItem.query.all()
+    reviews = Review.query.all()
+    results = Results(review_items,reviews)
+
+    #results.review_item_count = len(review_items)
+    #results.review_count = len(Review.query.all())
+    #if len(review_items) >0:
+    #    average_review_score = 0
+    #    for review_item in review_items:
+    #        average_review_score += len(review_item.reviews)
+    #        if len(review_item.reviews) == 0:
+    #            results.review_item_without_review_count += 1
+    #    average_review_score /= len(review_items)
+    return results
+
 #===============================================================================
 # response functions
 #===============================================================================
@@ -464,27 +672,39 @@ def index():
 
 @app.route('/sort_review_item/<field>/<direction>')
 def overview(field,direction):
+
+    user_alias = aliased(User, name='user_alias')
     order_by_1 = ReviewItem.creation_date
     order_by_2 = Review.review_date
     order_by_3 = None
     if field == "name":
         order_by_1 = ReviewItem.name
+        if direction == "desc":
+            order_by_1 = ReviewItem.name.desc()
     if field == "creator":
-        order_by_1 = order_by_1 = User.name
+        order_by_1  = User.name
         order_by_2 = ReviewItem.creation_date
         order_by_3 = Review.review_date
+        if direction == "desc":
+            order_by_1 = User.name.desc()
     if field == "review_type":
         order_by_1 = ReviewType.name
-        order_by_2 = order_by_1 = User.name
+        order_by_2 = User.name
         order_by_3 = ReviewItem.creation_date
-    if field == "reviewed_aspect":
-        order_by_1 = ReviewItem.reviewed_aspect
+        if direction == "desc":
+            order_by_1 = ReviewType.name.desc()
+    if field == "reviewer":
+        order_by_1 = user_alias.name
+        order_by_2 = Review.review_date
+        if direction == "desc":
+            order_by_1 = user_alias.name.desc()
     review_items = ReviewItem.query.outerjoin(
         Review, ReviewItem.id == Review.review_item_id).join(
         User, User.id == ReviewItem.creator_id).join(
-        ReviewType, ReviewType.id == ReviewItem.review_type_id).order_by(
-        order_by_1, order_by_2, None).all()
-    return render_template('review_items.html', title='Code reviews', review_items=review_items)
+        ReviewType, ReviewType.id == ReviewItem.review_type_id).join(
+        user_alias, user_alias.id == Review.reviewer_id).order_by(
+        order_by_1, order_by_2, order_by_3).all()
+    return render_template('review_items.html', title='Code reviews', review_items=review_items, results= getResults())
 
 
 
@@ -517,7 +737,7 @@ def new_review_item():
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "new review item"
-        return render_template('review_item.html', action = "new", action_text=action_text, form = form)
+        return render_template('review_item.html', action = "new", action_text=action_text, form = form, results= getResults())
 
 
 @app.route('/edit_review_item/<id>', methods=['GET', 'POST'])
@@ -549,7 +769,7 @@ def edit_review_item(id):
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "edit review item {r}".format(r=review_item.name)
-        return render_template('review_item.html', action = "edit", action_text=action_text, form = form)
+        return render_template('review_item.html', action = "edit", action_text=action_text, form = form, results= getResults())
 
 
 @app.route('/del_review_item/<id>', methods=['GET', 'POST'])
@@ -576,7 +796,7 @@ def delete_review_item(id):
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "delete review item {r}".format(r=review_item.name)
-        return render_template('review_item.html', action = "delete", action_text=action_text, form = form)
+        return render_template('review_item.html', action = "delete", action_text=action_text, form = form, results= getResults())
 
 
 
@@ -603,7 +823,7 @@ def new_review(review_item_id):
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "edit review for {r}".format(r=review_item.name)
-        return render_template('review.html', action = "new", action_text=action_text, form = form)
+        return render_template('review.html', action = "new", action_text=action_text, form = form, results= getResults())
 
 
 
@@ -635,7 +855,7 @@ def edit_review(id):
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "edit review for {r} on {dt}".format(r=review.review_item.name, dt = datetime.strftime(review.review_date,DATETIME_FMT_FORM))
-        return render_template('review.html', action = "edit", action_text=action_text, form = form)
+        return render_template('review.html', action = "edit", action_text=action_text, form = form, results= getResults())
 
 @app.route('/del_review/<id>', methods=['GET', 'POST'])
 def delete_review(id):
@@ -655,32 +875,28 @@ def delete_review(id):
           return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "delete review for {r} on {dt}".format(r=review.review_item.name, dt = datetime.strftime(review.review_date,DATETIME_FMT_FORM))
-        return render_template('review.html', action = "delete", action_text=action_text, form = form)
+        return render_template('review.html', action = "delete", action_text=action_text, form = form, results= getResults())
 
-
-class UserEvaluation(object):
-    def __init__(self,user):
-        self.user = user
-        self.review_item_creator_count = 0
-        self.review_count = 0
-        self.count = 0
 
 @app.route('/analysis', methods=['GET', 'POST'])
 def analysis():
-    users = User.query.all()
-    userEvaluations = dict()
-    for user in users:
-        userEvaluations[user.name] = UserEvaluation(user)
+    userAnalysis = getUserAnalysis()
+    return render_template('analysis.html',userAnalysis=userAnalysis, results= getResults())
 
-    review_items = ReviewItem.query.all()
-    for review_item in review_items:
-        userEvaluations[review_item.creator.name].review_item_creator_count += 1
-        userEvaluations[review_item.creator.name].count += 1
-    reviews = Review.query.all()
-    for review in reviews:
-        userEvaluations[review.reviewer.name].review_count += 1
-        userEvaluations[review.reviewer.name].count += 1
-    return render_template('analysis.html',userEvaluations=userEvaluations)
+@app.route('/users', methods=['GET'])
+def users():
+    users = User.query.all()
+    return render_template('users.html',users=users, results= getResults())
+
+@app.route('/about', methods=['GET'])
+def about():
+    about = list()
+    about.append("Code review app written by Peter Rudnik")
+    about.append("Berlin, Karlsruhe, Germany")
+    about.append("project start: Dec 2018 ")
+    about.append("last change: Jan 2019 ")
+
+    return render_template('about.html',about=about, results= getResults())
 
 
 #@app.route('/mylogin')
@@ -688,7 +904,7 @@ def analysis():
 #    form = LoginForm()
 #    return render_template('login.html', title='Sign In', form=form)
 
-
+"""
 @app.route('/mylogin', methods=['GET', 'POST'])
 def mylogin():
     form = LoginForm()
@@ -699,7 +915,7 @@ def mylogin():
         return redirect(url_for('index'))
 
     return render_template('login.html', title='Sign In', form=form)
-
+"""
 
 #===============================================================================
 # controlling functions

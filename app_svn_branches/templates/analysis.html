@@ -3,35 +3,48 @@
 {% block content %}
     <form action="" method="post" novalidate>
        {# {{ form.hidden_tag() }} #}
-    <table id="main">
+    <table class="analysis", id="analysis">
         <thead>
             <tr>
-                <th></th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creation_date/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creation_date/desc"></a> user</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creation_date/desc"></a><br/>user</th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/review_type/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/review_type/desc"></a> overall particpation</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/review_type/desc"></a><br/>overall particpation</th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/name/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/name/desc"></a> review items created</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/name/desc"></a><br/>review items created</th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creator/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creator/desc"></a>reviews completed</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/note"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/note"></a> note</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creator/desc"></a><br/>reviews completed</th>
                 <th></th>
-                 <th>note</th>
+                {% for name in userAnalysis.getReviewIntervalNames() %}
+                    <th colspan="3">{{name}}</th>
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
-            {% for key, value in userEvaluations.items() %}
+            {% for key, value in userAnalysis.userEvaluations.items() %}
                 <tr>
-                    <td></td>
                     <td>{{ value.user.name }}</td>
-                    <td>{{ value.count }}</td>
-                    <td>{{ value.review_item_creator_count }}</td>
-                    <td>{{ value.review_count }}</td>
+                    <td>{{ value.getReviewInterval("all").participation_count }}</td>
+                    <td>{{ value.getReviewInterval("all").review_item_creator_count }}</td>
+                    <td>{{ value.getReviewInterval("all").review_count }}</td>
                     <td></td>
-                    <td></td>
-                    <td></td>
+                    {% for review_interval in value.review_intervals %}
+                        {% if review_interval.participation_count > 0 %}
+                               <td>{{review_interval.participation_count}}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if review_interval.review_item_creator_count > 0 %}
+                               <td>{{review_interval.participation_count}}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if review_interval.review_count > 0 %}
+                               <td>{{review_interval.participation_count}}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                    {% endfor %}
                 </tr>
             {% endfor %}
 

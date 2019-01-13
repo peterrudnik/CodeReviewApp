@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <table id="main" class="main">
+        <thead>
+            <tr>
+                <th>user</th>
+                <th>name</th>
+                <th>from</th>
+                <th>to</th>
+                <th>note</th>
+            </tr>
+        </thead>
+        <tbody>
+             {% for user in users %}
+                   <tr>
+                        <td>{{ user.shortname }}</td>
+                        <td>{{ user.name }}</td>
+                       <td>{{user.from_date|datetime('medium')}}</td>
+                       <td>{{user.to_date|datetime('medium')}}</td>
+                       <td>{{ user.note }}</td>
+                    </tr>
+             {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

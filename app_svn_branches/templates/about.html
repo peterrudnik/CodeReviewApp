@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <table id="main" class="main">
+        <thead>
+            <tr>
+                <th>about</th>
+            </tr>
+        </thead>
+        <tbody>
+             {% for text_item in about %}
+                   <tr>
+                        <td>{{ text_item }}</td>
+                    </tr>
+             {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -2,24 +2,24 @@
 
 {% block content %}
 
-    <table id="main">
+    <table id="review_items">
         <thead>
             <tr>
                 <th></th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creation_date/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creation_date/desc"></a> created</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creation_date/desc"></a>created</th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/name/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/name/desc"></a> review item</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/name/desc"></a>review item</th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creator/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creator/desc"></a> creator</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creator/desc"></a>creator</th>
                 <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/review_type/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/review_type/desc"></a> review type</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/note"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/note"></a> note</th>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/review_type/desc"></a>review type</th>
+                <th>note</th>
                 <th></th>
                 <th>reviewed</th>
                 <th></th>
-                <th>reviewer</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/reviewer/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/reviewer/desc"></a> reviewer</th>
                 <th>approved</th>
                  <th>note</th>
             </tr>
@@ -75,6 +75,7 @@
                     {% endfor %}
                 {% else %}
                     <td><span class = "warning">no review</span></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
