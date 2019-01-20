@@ -1,0 +1,13 @@
+mysql:
+    username:   username
+    password:  password
+
+sqllite:
+    db: 'c:\code_reviews.db'
+
+svn:
+    url: "url"
+
+import:
+    csv : 'c:\update_from_repository.csv'
+    svn_xml : "c:\svn_branches_export.xml"

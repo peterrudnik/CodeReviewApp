@@ -6,14 +6,14 @@
     <table class="analysis", id="analysis">
         <thead>
             <tr>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creation_date/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creation_date/desc"></a><br/>user</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/review_type/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/review_type/desc"></a><br/>overall particpation</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/name/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/name/desc"></a><br/>review items created</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/sort_review_item/creator/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/sort_review_item/creator/desc"></a><br/>reviews completed</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/creation_date/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/creation_date/desc"></a><br/>user</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/review_type/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/review_type/desc"></a><br/>overall particpation</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/name/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/name/desc"></a><br/>review items created</th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/creator/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/creator/desc"></a><br/>reviews completed</th>
                 <th></th>
                 {% for name in userAnalysis.getReviewIntervalNames() %}
                     <th colspan="3">{{name}}</th>
