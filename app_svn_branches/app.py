@@ -81,8 +81,8 @@ def create_app():
     db.db.init_app(app)
     app.register_blueprint(view_review_item.blueprint, url_prefix='/review_item')
     app.register_blueprint(view_review.blueprint, url_prefix='/review')
-    app.register_blueprint(view_review_item.blueprint, url_prefix='/user')
-    app.register_blueprint(view_review_item.blueprint, url_prefix='/analysis')
+    app.register_blueprint(view_user.blueprint, url_prefix='/user')
+    app.register_blueprint(view_analysis.blueprint, url_prefix='/analysis')
     app.jinja_env.filters['datetime'] = format_datetime
     # auth = HTTPTokenAuth(scheme='Token')
     #db = SQLAlchemy(app)

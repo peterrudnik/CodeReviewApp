@@ -173,7 +173,7 @@ class Results(object):
         if self.getReviewItemCount() > 0:
             f_without = float(self.getReviewItemsWithoutReviewCount())
             f_count = float(self.getReviewItemCount())
-            ret = (f_without / f_count) * 100.0
+            ret = ((f_count- f_without) / f_count) * 100.0
         else:
             ret = 0
         return ret
