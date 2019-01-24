@@ -106,6 +106,7 @@ def delete_review_item(id):
 
 @blueprint.route('/sort/<field>/<direction>')
 def overview(field,direction):
+    '''
     user_alias = aliased(db.User, name='user_alias')
     order_by_1 = db.ReviewItem.creation_date
     order_by_2 = db.Review.review_date
@@ -137,6 +138,8 @@ def overview(field,direction):
         db.ReviewType, db.ReviewType.id == db.ReviewItem.review_type_id).join(
         user_alias, user_alias.id == db.Review.reviewer_id).order_by(
         order_by_1, order_by_2, order_by_3).all()
+    '''
+    review_items = db.ReviewItem.query.all()
     results = view_analysis.getResults()
     return render_template('review_items.html', title='Code reviews', review_items=review_items, results= results)
 

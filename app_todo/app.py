@@ -11,7 +11,7 @@ from flask_httpauth import HTTPTokenAuth
 import json
 from passlib.hash import pbkdf2_sha256 as hasher
 from datetime import datetime
-import secrets
+#import secrets
 from app_todo.config import Config
 from app_todo.forms import LoginForm
 from flask import render_template, flash, redirect
@@ -72,9 +72,9 @@ class Profile(db.Model):
     tasks = db.relationship("Task", back_populates='profile', lazy=True)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(Profile).__init__(*args, **kwargs)
         self.date_joined = datetime.now()
-        self.token = secrets.token_urlsafe(64)
+        #self.token = secrets.token_urlsafe(64)
 
     def to_dict(self):
         """Get the object's properties as a dictionary."""

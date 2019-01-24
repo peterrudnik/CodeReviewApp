@@ -38,6 +38,10 @@ class Config(object):
         credentials = "{u}:{p}".format(u=self.config_yaml["mysql"]["username"], p=self.config_yaml["mysql"]["password"])
         return credentials
 
+    def get_mysql_db(self):
+        credentials = "{h}/{db}".format(h=self.config_yaml["mysql"]["host"], db=self.config_yaml["mysql"]["db"])
+        return credentials
+
     def get_file_svn_xml(self):
         return self.config_yaml["import"]["svn_xml"]
 
@@ -53,7 +57,8 @@ config = Config(config_file)
 # definitions with capital letters are used by     app.config.from_object(config_module)
 #class Config(object):
 SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
-SQLALCHEMY_DATABASE_URI = r'sqlite:///' + config.get_sqlite_db()
-#SQLALCHEMY_DATABASE_URI = r'mysql+pymysql://{c}@localhost/codereview'.format(c=config.get_mysql_credentials())
+#SQLALCHEMY_DATABASE_URI = r'sqlite:///' + config.get_sqlite_db()
+#SQLALCHEMY_DATABASE_URI = r'mysql+pymysql://{c}@localhost/codereview'.format(c=config.get_mysql_credentials(),db=config.get_mysql_db())
+SQLALCHEMY_DATABASE_URI = r'mysql+pymysql://{c}@{db}'.format(c=config.get_mysql_credentials(),db=config.get_mysql_db())
 
 

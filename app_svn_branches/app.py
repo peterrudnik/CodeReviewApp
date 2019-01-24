@@ -26,6 +26,7 @@ import babel
 #from database import db
 import database as db
 
+import view_main
 import view_review_item
 import view_review
 import view_user
@@ -64,6 +65,7 @@ def format_datetime(value, format='medium'):
         return "na"
 
 
+
 def create_app():
     '''
     app = Flask(__name__)
@@ -79,6 +81,7 @@ def create_app():
     # app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///E:\Development\temp\FlaskWebServer\app.db'
     app.config.from_object(config_module)
     db.db.init_app(app)
+    app.register_blueprint(view_main.blueprint, url_prefix='/')
     app.register_blueprint(view_review_item.blueprint, url_prefix='/review_item')
     app.register_blueprint(view_review.blueprint, url_prefix='/review')
     app.register_blueprint(view_user.blueprint, url_prefix='/user')
@@ -89,8 +92,8 @@ def create_app():
     # a = SQLAlchemy
     return app
 
-global app
-app = create_app()
+#global app
+#app = create_app()
 
 #app = None
 
@@ -98,70 +101,19 @@ app = create_app()
 # response functions
 #===============================================================================
 
-
-@app.route('/index')
-def index():
-    #review_items = db.ReviewItem.query.order_by(db.ReviewItem.creation_date).all()
-    #review_items = db.ReviewItem.query.order_by(db.ReviewItem.creation_date).all()
-    #join neccessary because of the order_by
-    #review_items = db.ReviewItem.query.outerjoin(Review, db.ReviewItem.id == Review.review_item_id).order_by(db.ReviewItem.creation_date, Review.review_date).all()
-
-    #review_items = db.ReviewItem.query.outerjoin(Review, db.ReviewItem.id == Review.review_item_id).join(User, User.id == db.ReviewItem.creator_id).order_by(
-    #    db.ReviewItem.creation_date, Review.review_date).all()
-    #return render_template('review_items.html', title='Code reviews', review_items=review_items)
-
-    return redirect('/review_item/sort/creation_date/asc')
-
-    #return render_template('reviewed_items.html', title='Code reviews', data=getData())
-    #@app.route('/sort_review_item/creation_date/asc')
-
-@app.route('/update')
-def update():
-    db.update_from_repository()
-    return render_template('messages.html', results= view_analysis.getResults())
-    #return render_template('reviewed_items.html', title='Code reviews', data=getData())
-
-
-@app.route('/about', methods=['GET'])
-def show_about():
-    about = list()
-    about.append("Code review app written by Peter Rudnik")
-    about.append("Berlin, Karlsruhe, Germany")
-    about.append("project start: Dec 2018 ")
-    about.append("last change: Jan 2019 ")
-
-    return render_template('about.html',about=about, results= view_analysis.getResults())
-
-
-#@app.route('/mylogin')
-#def mylogin():
-#    form = LoginForm()
-#    return render_template('login.html', title='Sign In', form=form)
-
-"""
-@app.route('/mylogin', methods=['GET', 'POST'])
-def mylogin():
-    form = LoginForm()
-    if form.validate_on_submit():
-        flash('Login requested for user {}, remember_me={}'.format(
-            form.username.data, form.remember_me.data))
-        #return redirect('/api/v1/accounts/login')
-        return redirect(url_for('index'))
-
-    return render_template('login.html', title='Sign In', form=form)
-"""
-
 #===============================================================================
 # controlling functions
 #===============================================================================
-def start_f1(switch = False):
+
+def start_app():
     # Because this is just a demonstration we set up the database like this.
     #if not os.path.isfile('/tmp/test.db'):
     #  setup_database(app)
     #app.run()
+    app = create_app()
     app.run(host='0.0.0.0', port= 8090) #http://127.0.0.1:8090/index;  http://127.0.0.1:8090/api/v1   http://127.0.0.1:8090/api/v1/accounts/prudnik3
 
 if __name__ == "__main__":
-    start_f1(True)
+    start_app()
     #update_from_repository()
 

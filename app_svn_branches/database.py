@@ -13,17 +13,12 @@ db = SQLAlchemy()
 
 DATETIME_FMT_DISPLAY = '%Y-%m-%d %H:%M'
 DATETIME_FMT_IMPORT = '%d/%m/%Y %H:%M'
-
-DATETIME_FMT_IMPORT = '%d/%m/%Y %H:%M'
-repository_update = 'e:/development/temp/FlaskWebServer/update_from_repository.txt'
-repository_cmd = 'more "e:/development/temp/FlaskWebServer/update_from_repository.txt"'
-
-
 # ===============================================================================
 # models
 # ===============================================================================
 
 class User(db.Model):
+    #__table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False)
@@ -37,6 +32,7 @@ class User(db.Model):
 
 
 class ReviewType(db.Model):
+    #__table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'review_type'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False, unique=True)
@@ -44,6 +40,7 @@ class ReviewType(db.Model):
 
 
 class ReviewItem(db.Model):
+    #__table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'review_item'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False, unique=True)
@@ -93,6 +90,7 @@ class ReviewItem(db.Model):
 
 
 class Review(db.Model):
+    # __table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'review'
     id = db.Column(db.Integer, primary_key=True)
     note = db.Column(db.Unicode(64), nullable=True)

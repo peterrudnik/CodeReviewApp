@@ -1,6 +1,8 @@
 mysql:
     username:   username
     password:  password
+    host: host
+    db: db
 
 sqllite:
     db: 'c:\code_reviews.db'
