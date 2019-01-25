@@ -2,15 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="681d96f4-4c57-4d12-93cf-5786c383561c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app_svn_branches/view_main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_svn_branches/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app_svn_branches/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_svn_branches/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app_svn_branches/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_svn_branches/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/app_svn_branches/config.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app_svn_branches/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/app_svn_branches/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_svn_branches/initializedb.py" beforeDir="false" afterPath="$PROJECT_DIR$/app_svn_branches/initializedb.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_svn_branches/view_review_item.py" beforeDir="false" afterPath="$PROJECT_DIR$/app_svn_branches/view_review_item.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_todo/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app_todo/app.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,14 +13,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/initializedb.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="26" column="13" lean-forward="true" selection-start-line="18" selection-end-line="19" />
-              <folding>
-                <element signature="e#227#262#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="119">
+              <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
             </state>
           </provider>
         </entry>
@@ -35,7 +25,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/app.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="44">
+            <state relative-caret-position="833">
               <caret line="74" column="21" selection-start-line="74" selection-start-column="21" selection-end-line="74" selection-end-column="21" />
               <folding>
                 <element signature="e#73#102#0" expanded="true" />
@@ -47,7 +37,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/view_main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="102">
+            <state relative-caret-position="85">
               <caret line="15" column="35" selection-start-line="15" selection-start-column="35" selection-end-line="15" selection-end-column="35" />
               <folding>
                 <element signature="e#0#21#0" expanded="true" />
@@ -59,8 +49,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="111">
-              <caret line="46" lean-forward="true" selection-start-line="46" selection-end-line="46" />
+            <state relative-caret-position="284">
+              <caret line="46" selection-start-line="46" selection-end-line="46" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -71,7 +61,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/view_review_item.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="340">
+            <state relative-caret-position="170">
               <caret line="20" selection-end-line="20" />
               <folding>
                 <element signature="e#0#21#0" expanded="true" />
@@ -83,7 +73,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/view_user.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
+            <state relative-caret-position="34">
               <caret line="8" column="9" selection-start-line="8" selection-start-column="9" selection-end-line="8" selection-end-column="9" />
               <folding>
                 <element signature="e#0#21#0" expanded="true" />
@@ -101,11 +91,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app_svn_branches/database.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-629">
-              <caret line="20" column="5" selection-start-line="20" selection-start-column="5" selection-end-line="20" selection-end-column="5" />
+            <state relative-caret-position="238">
+              <caret line="41" column="27" lean-forward="true" selection-start-line="41" selection-start-column="27" selection-end-line="41" selection-end-column="27" />
               <folding>
                 <element signature="e#0#29#0" expanded="true" />
               </folding>
@@ -239,9 +229,9 @@
         <option value="$PROJECT_DIR$/app_svn_branches/view_main.py" />
         <option value="$PROJECT_DIR$/app_svn_branches/initializedb.py" />
         <option value="$PROJECT_DIR$/app_svn_branches/app.py" />
-        <option value="$PROJECT_DIR$/app_svn_branches/database.py" />
         <option value="$PROJECT_DIR$/app_svn_branches/config.yml" />
         <option value="$PROJECT_DIR$/app_svn_branches/config.py" />
+        <option value="$PROJECT_DIR$/app_svn_branches/database.py" />
       </list>
     </option>
   </component>
@@ -550,7 +540,14 @@
       <option name="project" value="LOCAL" />
       <updated>1548059455881</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="restructuring: initialize db, config">
+      <created>1548318273964</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1548318273964</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -624,7 +621,8 @@
     <MESSAGE value="added user list, user evaluation, about" />
     <MESSAGE value="app restructured" />
     <MESSAGE value="some minor bug fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="some minor bug fixes" />
+    <MESSAGE value="restructuring: initialize db, config" />
+    <option name="LAST_COMMIT_MESSAGE" value="restructuring: initialize db, config" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -951,16 +949,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app_svn_branches/view_user.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="8" column="9" selection-start-line="8" selection-start-column="9" selection-end-line="8" selection-end-column="9" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://C:/Python27/Lib/os.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="280">
@@ -978,16 +966,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app_svn_branches/view_review_item.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="20" selection-end-line="20" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app_todo/initializedb.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
@@ -995,10 +973,40 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app_svn_branches/app.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="833">
+          <caret line="74" column="21" selection-start-line="74" selection-start-column="21" selection-end-line="74" selection-end-column="21" />
+          <folding>
+            <element signature="e#73#102#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app_svn_branches/view_main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
+        <state relative-caret-position="85">
           <caret line="15" column="35" selection-start-line="15" selection-start-column="35" selection-end-line="15" selection-end-column="35" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app_svn_branches/view_review_item.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="20" selection-end-line="20" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app_svn_branches/view_user.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="8" column="9" selection-start-line="8" selection-start-column="9" selection-end-line="8" selection-end-column="9" />
           <folding>
             <element signature="e#0#21#0" expanded="true" />
           </folding>
@@ -1012,42 +1020,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app_svn_branches/database.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-629">
-          <caret line="20" column="5" selection-start-line="20" selection-start-column="5" selection-end-line="20" selection-end-column="5" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app_svn_branches/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="111">
-          <caret line="46" lean-forward="true" selection-start-line="46" selection-end-line="46" />
+        <state relative-caret-position="284">
+          <caret line="46" selection-start-line="46" selection-end-line="46" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app_svn_branches/app.py">
+    <entry file="file://$PROJECT_DIR$/app_svn_branches/initializedb.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="44">
-          <caret line="74" column="21" selection-start-line="74" selection-start-column="21" selection-end-line="74" selection-end-column="21" />
-          <folding>
-            <element signature="e#73#102#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="119">
+          <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app_svn_branches/initializedb.py">
+    <entry file="file://$PROJECT_DIR$/app_svn_branches/database.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="26" column="13" lean-forward="true" selection-start-line="18" selection-end-line="19" />
+        <state relative-caret-position="238">
+          <caret line="41" column="27" lean-forward="true" selection-start-line="41" selection-start-column="27" selection-end-line="41" selection-end-column="27" />
           <folding>
-            <element signature="e#227#262#0" expanded="true" />
+            <element signature="e#0#29#0" expanded="true" />
           </folding>
         </state>
       </provider>

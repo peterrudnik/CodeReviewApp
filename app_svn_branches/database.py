@@ -19,7 +19,7 @@ DATETIME_FMT_IMPORT = '%d/%m/%Y %H:%M'
 
 class User(db.Model):
     #__table_args__ = {"schema": "dev_noadb"}
-    __tablename__ = 'user'
+    __tablename__ = 'tblqa_coderview_user'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False)
     shortname = db.Column(db.Unicode(64), nullable=False, unique=True)
@@ -33,7 +33,7 @@ class User(db.Model):
 
 class ReviewType(db.Model):
     #__table_args__ = {"schema": "dev_noadb"}
-    __tablename__ = 'review_type'
+    __tablename__ = 'tblqa_coderview_review_type'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False, unique=True)
     review_item = db.relationship("ReviewItem", back_populates='review_type', lazy=True)
@@ -41,13 +41,13 @@ class ReviewType(db.Model):
 
 class ReviewItem(db.Model):
     #__table_args__ = {"schema": "dev_noadb"}
-    __tablename__ = 'review_item'
+    __tablename__ = 'tblqa_coderview_review_item'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False, unique=True)
-    review_type_id = db.Column(db.Integer, db.ForeignKey('review_type.id'), nullable=False)
+    review_type_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_review_type.id'), nullable=False)
     reviewed_aspect = db.Column(db.Unicode(64), nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False)
-    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_user.id'), nullable=False)
     # The following line says: populate Review.review_item it with members froms this class: a list or a single member
     reviews = db.relationship("Review", back_populates='review_item',
                               lazy=True)  # the first argument references the class not the table!!!!!!
@@ -91,13 +91,13 @@ class ReviewItem(db.Model):
 
 class Review(db.Model):
     # __table_args__ = {"schema": "dev_noadb"}
-    __tablename__ = 'review'
+    __tablename__ = 'tblqa_coderview_review'
     id = db.Column(db.Integer, primary_key=True)
     note = db.Column(db.Unicode(64), nullable=True)
     review_date = db.Column(db.DateTime, nullable=False)
     approved = db.Column(db.Boolean, default=True)
-    reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    review_item_id = db.Column(db.Integer, db.ForeignKey('review_item.id'), nullable=False)
+    reviewer_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_user.id'), nullable=False)
+    review_item_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_review_item.id'), nullable=False)
     review_item = db.relationship("ReviewItem",
                                   back_populates='reviews')  # the first argument references the class not the table!!!!!!
     reviewer = db.relationship("User", back_populates='reviewer', lazy=True)
