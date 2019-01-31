@@ -1,4 +1,4 @@
-import database as db
+import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
 from flask import render_template, flash, redirect
@@ -12,6 +12,7 @@ blueprint = Blueprint('user', __name__,
 
 @blueprint.route('/', methods=['GET'])
 def show_users():
-    users = db.User.query.all()
+    #db = database.get_db()
+    users = database.User.query.all()
     return render_template('users.html',users=users, results= view_analysis.getResults())
 

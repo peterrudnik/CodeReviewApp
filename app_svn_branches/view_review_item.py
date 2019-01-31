@@ -1,4 +1,4 @@
-import database as db
+import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
 from flask import render_template, flash, redirect
@@ -18,6 +18,7 @@ blueprint = Blueprint('review_item', __name__,
 
 @blueprint.route('/new', methods=['GET', 'POST'])
 def new_review_item():
+    #db = database.get_db()
     form = FormNewReviewItem()
     form.review_type.choices = [(g.id, g.name) for g in db.ReviewType.query.order_by('name')]
     form.creator.choices = [(g.id, g.shortname) for g in db.User.query.order_by('shortname')]
@@ -29,13 +30,13 @@ def new_review_item():
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
             return render_template('review_item.html', form=form)
         else:
-            review_type = db.getReviewType(id=form.review_type.data)
-            creator = db.getUser(id=form.creator.data)
-            form_review_item = db.ReviewItem(id=None, name=form.review_item.data, review_type_id=review_type.id,
+            review_type = database.getReviewType(id=form.review_type.data)
+            creator = database.getUser(id=form.creator.data)
+            form_review_item = database.ReviewItem(id=None, name=form.review_item.data, review_type_id=review_type.id,
                                           reviewed_aspect='new function x',
                                           creation_date=datetime.strptime(form.created.data, DATETIME_FMT_FORM),
                                           creator_id=creator.id)
-            db.addReviewItem(form_review_item, flash_details = True)
+            database.addReviewItem(form_review_item, flash_details = True)
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "new review item"
@@ -44,15 +45,16 @@ def new_review_item():
 
 @blueprint.route('/edit/<id>', methods=['GET', 'POST'])
 def edit_review_item(id):
+    #db = database.get_db()
     form = FormEditReviewItem()
-    review_item = db.getReviewItem(id=id)
+    review_item = database.getReviewItem(id=id)
     if request.method == 'GET':
         form.created.data= datetime.strftime(review_item.creation_date,DATETIME_FMT_FORM)
         form.reviewed_aspect.data = review_item.reviewed_aspect
         form.creator.data = review_item.creator.id
         form.review_type.data = review_item.review_type.id
-    form.review_type.choices = [(g.id, g.name) for g in db.ReviewType.query.order_by('name')]
-    form.creator.choices = [(g.id, g.shortname) for g in db.User.query.order_by('shortname')]
+    form.review_type.choices = [(g.id, g.name) for g in database.ReviewType.query.order_by('name')]
+    form.creator.choices = [(g.id, g.shortname) for g in database.User.query.order_by('shortname')]
 
     #if form.validate_on_submit():
     if request.method == 'POST':
@@ -61,13 +63,13 @@ def edit_review_item(id):
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
             return render_template('review_item.html', form=form)
         else:
-            review_type = db.getReviewType(id=form.review_type.data)
-            creator = db.getUser(id=form.creator.data)
-            form_review_item = db.ReviewItem(id=review_item.id, name=review_item.name, review_type_id=review_type.id,
+            review_type = database.getReviewType(id=form.review_type.data)
+            creator = database.getUser(id=form.creator.data)
+            form_review_item = database.ReviewItem(id=review_item.id, name=review_item.name, review_type_id=review_type.id,
                                           reviewed_aspect=form.reviewed_aspect.data,
                                           creation_date=datetime.strptime(form.created.data, DATETIME_FMT_FORM),
                                           creator_id=creator.id)
-            db.updateReviewItem(form_review_item, flash_details = True)
+            database.updateReviewItem(form_review_item, flash_details = True)
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "edit review item {r}".format(r=review_item.name)
@@ -76,16 +78,17 @@ def edit_review_item(id):
 
 @blueprint.route('/del/<id>', methods=['GET', 'POST'])
 def delete_review_item(id):
+    #db = database.get_db()
     form = FormNewReviewItem()
-    review_item = db.getReviewItem(id=id)
+    review_item = database.getReviewItem(id=id)
     if request.method == 'GET':
         form.review_item.data = review_item.name
         form.created.data= datetime.strftime(review_item.creation_date,DATETIME_FMT_FORM)
         form.reviewed_aspect.data = review_item.reviewed_aspect
         form.creator.data = review_item.creator.id
         form.review_type.data = review_item.review_type.id
-    form.review_type.choices = [(g.id, g.name) for g in db.ReviewType.query.order_by('name')]
-    form.creator.choices = [(g.id, g.shortname) for g in db.User.query.order_by('shortname')]
+    form.review_type.choices = [(g.id, g.name) for g in database.ReviewType.query.order_by('name')]
+    form.creator.choices = [(g.id, g.shortname) for g in database.User.query.order_by('shortname')]
 
     #if form.validate_on_submit():
     if request.method == 'POST':
@@ -94,7 +97,7 @@ def delete_review_item(id):
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
             return render_template('review_item.html', form=form)
         else:
-            db.deleteReviewItem(review_item, flash_details = True)
+            database.deleteReviewItem(review_item, flash_details = True)
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "delete review item {r}".format(r=review_item.name)
@@ -139,7 +142,8 @@ def overview(field,direction):
         user_alias, user_alias.id == db.Review.reviewer_id).order_by(
         order_by_1, order_by_2, order_by_3).all()
     '''
-    review_items = db.ReviewItem.query.all()
+    #db = database.get_db()
+    review_items = database.ReviewItem.query.all()
     results = view_analysis.getResults()
     return render_template('review_items.html', title='Code reviews', review_items=review_items, results= results)
 

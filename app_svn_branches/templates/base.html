@@ -120,7 +120,9 @@
           <h1>Code reviews</h1>
        </div>
        <div class="rightside">
-            <p>statistics and results: {{ results.getScoreString() }}</p>
+            {% if results is defined %}
+                <p>statistics and results: {{ results.getScoreString() }}</p>
+            {% endif %}
          </div>
 
 

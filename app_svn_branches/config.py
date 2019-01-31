@@ -32,7 +32,7 @@ class Config(object):
         return True
 
     def get_svn_url(self):
-        return self.config_yaml.svn["url"]
+        return self.config_yaml["svn"]["url"]
 
     def get_mysql_credentials(self):
         credentials = "{u}:{p}".format(u=self.config_yaml["mysql"]["username"], p=self.config_yaml["mysql"]["password"])

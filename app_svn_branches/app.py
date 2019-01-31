@@ -24,8 +24,9 @@ from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, For
 from flask import render_template, flash, redirect
 import babel
 #from database import db
-import database as db
+import database
 
+import auth
 import view_main
 import view_review_item
 import view_review
@@ -75,13 +76,17 @@ def create_app():
     app.register_blueprint(people, url_prefix='')
     return app
     '''
+    db = database.get_db()
     app = Flask(__name__)
     # app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://localhost:5432/flask_todo'
     # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/db_name'
     # app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///E:\Development\temp\FlaskWebServer\app.db'
+    #app.app_context()
     app.config.from_object(config_module)
-    db.db.init_app(app)
-    app.register_blueprint(view_main.blueprint, url_prefix='/')
+    db.init_app(app)
+    #app.register_blueprint(view_main.blueprint, url_prefix='/')
+    app.register_blueprint(auth.blueprint)
+    app.register_blueprint(view_main.blueprint)
     app.register_blueprint(view_review_item.blueprint, url_prefix='/review_item')
     app.register_blueprint(view_review.blueprint, url_prefix='/review')
     app.register_blueprint(view_user.blueprint, url_prefix='/user')

@@ -1,4 +1,4 @@
-import database as db
+import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
 from flask import render_template, flash, redirect
@@ -9,14 +9,15 @@ from datetime import datetime
 import dateutil.rrule as rrule
 import calendar
 from sqlalchemy.orm import aliased
+from auth import login_required
 
 
 blueprint = Blueprint('main', __name__,
                  template_folder='templates',
                  static_folder='static')
 
-
 @blueprint.route('/index')
+@login_required
 def index():
     # review_items = db.ReviewItem.query.order_by(db.ReviewItem.creation_date).all()
     # review_items = db.ReviewItem.query.order_by(db.ReviewItem.creation_date).all()
@@ -34,7 +35,8 @@ def index():
 
 @blueprint.route('/update')
 def update():
-    db.update_from_repository()
+    #db = database.get_db()
+    database.update_from_repository()
     return render_template('messages.html', results=view_analysis.getResults())
     # return render_template('reviewed_items.html', title='Code reviews', data=getData())
 

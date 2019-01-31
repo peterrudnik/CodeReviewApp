@@ -1,60 +1,105 @@
 from datetime import datetime
 import dateutil.rrule as rrule
 import calendar
-from flask import  flash
+from flask import flash
 import subprocess
 from lxml import etree as ET
 import app_svn_branches.config as cf
 import os
 from flask_sqlalchemy import SQLAlchemy
+import click
+from flask import current_app, g
+from flask.cli import with_appcontext
+import app_svn_branches.GeneralClasses as gencls
+import re
 
-db = SQLAlchemy()
-
+_db = SQLAlchemy()
 
 DATETIME_FMT_DISPLAY = '%Y-%m-%d %H:%M'
 DATETIME_FMT_IMPORT = '%d/%m/%Y %H:%M'
+_DATETIME_FMT_SVN_XML = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+
+# ===============================================================================
+# db
+# ===============================================================================
+def get_db():
+    return _db
+
+    if 'db' not in g:
+        g.db = _db
+        # sqlite3.connect(
+        # current_app.config['DATABASE'],
+        # detect_types=sqlite3.PARSE_DECLTYPES
+        # )
+        # g.db.row_factory = db.Row
+
+    return g.db
+
+
+def close_db(e=None):
+    db = g.pop('db', None)
+
+    if db is not None:
+        db.close()
+
+
+# ===============================================================================
+# utilities
+# ===============================================================================
+use_flash = True
+
+
+def myflash(msg):
+    global use_flash
+    if use_flash:
+        flash(msg)
+    else:
+        print (msg)
+
+
 # ===============================================================================
 # models
 # ===============================================================================
 
-class User(db.Model):
-    #__table_args__ = {"schema": "dev_noadb"}
+class User(_db.Model):
+    # __table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'tblqa_coderview_user'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode(64), nullable=False)
-    shortname = db.Column(db.Unicode(64), nullable=False, unique=True)
-    from_date = db.Column(db.DateTime, nullable=True)
-    to_date = db.Column(db.DateTime, nullable=True)
-    note = db.Column(db.Unicode(64), nullable=True)
-    review_item = db.relationship("ReviewItem",
-                                  back_populates='creator')  # the first argument references the class not the table!!!!!!
-    reviewer = db.relationship("Review", back_populates='reviewer')
+    id = _db.Column(_db.Integer, primary_key=True)
+    name = _db.Column(_db.Unicode(64), nullable=False)
+    shortname = _db.Column(_db.Unicode(64), nullable=False, unique=True)
+    from_date = _db.Column(_db.DateTime, nullable=True)
+    to_date = _db.Column(_db.DateTime, nullable=True)
+    note = _db.Column(_db.Unicode(64), nullable=True)
+    review_item = _db.relationship("ReviewItem",
+                                   back_populates='creator')  # the first argument references the class not the table!!!!!!
+    reviewer = _db.relationship("Review", back_populates='reviewer')
 
 
-class ReviewType(db.Model):
-    #__table_args__ = {"schema": "dev_noadb"}
+class ReviewType(_db.Model):
+    # __table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'tblqa_coderview_review_type'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode(64), nullable=False, unique=True)
-    review_item = db.relationship("ReviewItem", back_populates='review_type', lazy=True)
+    id = _db.Column(_db.Integer, primary_key=True)
+    name = _db.Column(_db.Unicode(64), nullable=False, unique=True)
+    review_item = _db.relationship("ReviewItem", back_populates='review_type', lazy=True)
 
 
-class ReviewItem(db.Model):
-    #__table_args__ = {"schema": "dev_noadb"}
+class ReviewItem(_db.Model):
+    # __table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'tblqa_coderview_review_item'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode(64), nullable=False, unique=True)
-    review_type_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_review_type.id'), nullable=False)
-    reviewed_aspect = db.Column(db.Unicode(64), nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False)
-    creator_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_user.id'), nullable=False)
+    id = _db.Column(_db.Integer, primary_key=True)
+    name = _db.Column(_db.Unicode(256), nullable=False, unique=True)
+    review_type_id = _db.Column(_db.Integer, _db.ForeignKey('tblqa_coderview_review_type.id'), nullable=False)
+    reviewed_aspect = _db.Column(_db.Unicode(1024), nullable=False)
+    creation_date = _db.Column(_db.DateTime, nullable=False)
+    creator_id = _db.Column(_db.Integer, _db.ForeignKey('tblqa_coderview_user.id'), nullable=False)
     # The following line says: populate Review.review_item it with members froms this class: a list or a single member
-    reviews = db.relationship("Review", back_populates='review_item',
-                              lazy=True)  # the first argument references the class not the table!!!!!!
-    review_type = db.relationship("ReviewType", back_populates='review_item', lazy=True)
-    creator = db.relationship("User", back_populates='review_item', lazy=True)
+    reviews = _db.relationship("Review", back_populates='review_item',
+                               lazy=True)  # the first argument references the class not the table!!!!!!
+    review_type = _db.relationship("ReviewType", back_populates='review_item', lazy=True)
+    creator = _db.relationship("User", back_populates='review_item', lazy=True)
 
-    #def __init__(self, *args, **kwargs):
+    # def __init__(self, *args, **kwargs):
     #    super(ReviewItem).__init__(*args, **kwargs)
     #    # self.date_joined = datetime.now()
     #    # self.token = secrets.token_urlsafe(64)
@@ -71,13 +116,13 @@ class ReviewItem(db.Model):
         }
 
     def flash(self):
-        flash('created        : {}'.format(self.creation_date.strftime(DATETIME_FMT_DISPLAY)))
-        flash('review item    : {}'.format(self.name))
+        myflash('created        : {}'.format(self.creation_date.strftime(DATETIME_FMT_DISPLAY)))
+        myflash('review item    : {}'.format(self.name))
         review_type = getReviewType(id=self.review_type_id)
-        flash('review type    : {}'.format(review_type.name))
+        myflash('review type    : {}'.format(review_type.name))
         creator = getUser(id=self.creator_id)
-        flash('reviewed aspect: {}'.format(self.reviewed_aspect))
-        flash('creator        : {}'.format(creator.shortname))
+        myflash('reviewed aspect: {}'.format(self.reviewed_aspect))
+        myflash('creator        : {}'.format(creator.shortname))
 
     def getReviewCount(self):
         return len(self.reviews)
@@ -89,18 +134,18 @@ class ReviewItem(db.Model):
         return "<ReviewItem: {} | reviews: {}>".format(self.name, len(self.reviews))
 
 
-class Review(db.Model):
+class Review(_db.Model):
     # __table_args__ = {"schema": "dev_noadb"}
     __tablename__ = 'tblqa_coderview_review'
-    id = db.Column(db.Integer, primary_key=True)
-    note = db.Column(db.Unicode(64), nullable=True)
-    review_date = db.Column(db.DateTime, nullable=False)
-    approved = db.Column(db.Boolean, default=True)
-    reviewer_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_user.id'), nullable=False)
-    review_item_id = db.Column(db.Integer, db.ForeignKey('tblqa_coderview_review_item.id'), nullable=False)
-    review_item = db.relationship("ReviewItem",
-                                  back_populates='reviews')  # the first argument references the class not the table!!!!!!
-    reviewer = db.relationship("User", back_populates='reviewer', lazy=True)
+    id = _db.Column(_db.Integer, primary_key=True)
+    note = _db.Column(_db.Unicode(1024), nullable=True)
+    review_date = _db.Column(_db.DateTime, nullable=False)
+    approved = _db.Column(_db.Boolean, default=True)
+    reviewer_id = _db.Column(_db.Integer, _db.ForeignKey('tblqa_coderview_user.id'), nullable=False)
+    review_item_id = _db.Column(_db.Integer, _db.ForeignKey('tblqa_coderview_review_item.id'), nullable=False)
+    review_item = _db.relationship("ReviewItem",
+                                   back_populates='reviews')  # the first argument references the class not the table!!!!!!
+    reviewer = _db.relationship("User", back_populates='reviewer', lazy=True)
 
     def to_dict(self):
         return {
@@ -116,10 +161,10 @@ class Review(db.Model):
         return "<Review: {} | user: {}>".format(self.review_date.strftime(DATETIME_FMT_DISPLAY), str(self.reviewer_id))
 
 
-#===============================================================================
+# ===============================================================================
 #  database queries
-#===============================================================================
-def getReviewItem(name = None, id = None):
+# ===============================================================================
+def getReviewItem(name=None, id=None):
     item = None
     if name is not None:
         item = ReviewItem.query.filter_by(name=name).first()
@@ -127,19 +172,25 @@ def getReviewItem(name = None, id = None):
         item = ReviewItem.query.filter_by(id=id).first()
     return item
 
+
 def flashReviewItem(review_item):
-    flash('created        : {}'.format(review_item.creation_date.strftime(DATETIME_FMT_DISPLAY)))
-    flash('review item    : {}'.format(review_item.name))
+    myflash('created        : {}'.format(review_item.creation_date.strftime(DATETIME_FMT_DISPLAY)))
+    myflash('review item    : {}'.format(review_item.name))
     review_type = getReviewType(id=review_item.review_type_id)
-    flash('review type    : {}'.format(review_type.name))
+    myflash('review type    : {}'.format(review_type.name))
     creator = getUser(id=review_item.creator_id)
-    flash('reviewed aspect: {}'.format(review_item.reviewed_aspect))
-    flash('creator        : {}'.format(creator.shortname))
+    myflash('reviewed aspect: {}'.format(review_item.reviewed_aspect))
+    myflash('creator        : {}'.format(creator.shortname))
 
 
-def addReviewItem(review_item, flash_details = False):
+def addReviewItem(review_item, flash_details=False):
     ret = False
     try:
+        db = get_db()
+
+        if review_item.name == u"2018-02-16_mod_NetExport_DEFR_D1_ts_D1_MR_forecast_implementation":
+            print "hello"
+
         item = ReviewItem.query.filter_by(name=review_item.name).first()
         if item is None:
             nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
@@ -148,20 +199,21 @@ def addReviewItem(review_item, flash_details = False):
             review_item.id = nMax + 1
             db.session.add(review_item)
             db.session.commit()
-            flash("""New review item "{i}" has been added to the database.""".format(i=review_item.name))
+            myflash("""New review item "{i}" has been added to the database.""".format(i=review_item.name))
             if flash_details:
                 flashReviewItem(review_item)
             ret = True
         else:
-            flash("""review item "{i}" already exists in the database.""".format(i=review_item.name))
+            myflash("""review item "{i}" already exists in the database.""".format(i=review_item.name))
     except Exception as e:
-        flash(str(e))
+        myflash(str(e))
     return ret
 
 
-def updateReviewItem(review_item_in, flash_details = False):
+def updateReviewItem(review_item_in, flash_details=False):
     ret = False
     try:
+        db = get_db()
         review_item = ReviewItem.query.filter_by(id=review_item_in.id).first()
         if review_item is not None:
             review_item.name = review_item_in.name
@@ -170,68 +222,74 @@ def updateReviewItem(review_item_in, flash_details = False):
             review_item.reviewed_aspect = review_item_in.reviewed_aspect
             review_item.review_type_id = review_item_in.review_type_id
             db.session.commit()
-            flash("""Updated review item "{i}" """.format(i=review_item.name))
+            myflash("""Updated review item "{i}" """.format(i=review_item.name))
             if flash_details:
                 flashReviewItem(review_item)
             ret = True
         else:
-            flash("""review item "{i}" does not exist in the database.""".format(i=review_item_in.name))
+            myflash("""review item "{i}" does not exist in the database.""".format(i=review_item_in.name))
     except Exception as e:
-        flash(str(e))
+        myflash(str(e))
     return ret
 
 
-def deleteReviewItem(review_item_in, flash_details = False):
+def deleteReviewItem(review_item_in, flash_details=False):
     ret = False
     try:
+        db = get_db()
         review_item = ReviewItem.query.filter_by(id=review_item_in.id).first()
         if review_item is not None:
             msgs = list()
-            msgs.append("""deleted review_item "{n}" created {dt}""".format(dt=review_item.creation_date.strftime(DATETIME_FMT_DISPLAY),
-                                                       n=review_item.name))
+            msgs.append("""deleted review_item "{n}" created {dt}""".format(
+                dt=review_item.creation_date.strftime(DATETIME_FMT_DISPLAY),
+                n=review_item.name))
 
             reviews = Review.query.filter_by(review_item_id=review_item_in.id).all()
             if len(reviews) > 0:
                 for review in reviews:
-                    msgs.append("""deleted review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY),
-                                                           ri=review.review_item.name))
+                    msgs.append(
+                        """deleted review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY),
+                                                                   ri=review.review_item.name))
 
-                #db.session.delete(reviews)
-                db.session.query(Review).filter(Review.review_item_id==review_item_in.id).delete()
+                # db.session.delete(reviews)
+                db.session.query(Review).filter(Review.review_item_id == review_item_in.id).delete()
             db.session.delete(review_item)
             db.session.commit()
             for msg in msgs:
-                flash(msg)
+                myflash(msg)
             if flash_details:
-                #flashReviewItem(review_item)
+                # flashReviewItem(review_item)
                 review_item.flash()
             ret = True
         else:
-            flash("""review item"{i}" does not exist in the database.""".format(i=review_item_in.name))
+            myflash("""review item"{i}" does not exist in the database.""".format(i=review_item_in.name))
     except Exception as e:
-        flash(str(e))
+        myflash(str(e))
     return ret
 
 
-
-
-def getReview(id = None):
+def getReview(id=None, reviewer_id = None, review_date = None):
     item = None
     if id is not None:
         item = Review.query.filter_by(id=id).first()
+    if reviewer_id is not None and review_date is not None:
+        item = Review.query.filter_by(reviewer_id=reviewer_id, review_date=review_date).first()
     return item
 
-def flashReview(review):
-    flash('review item: {}'.format(review.review_item.name))
-    flash('reviewed        : {}'.format(review.review_date.strftime(DATETIME_FMT_DISPLAY)))
-    reviewer = getUser(id=review.reviewer_id)
-    flash('reviewer        : {}'.format(reviewer.shortname))
-    flash('note        : {}'.format(review.note))
-    flash('approved        : {}'.format(review.approved))
 
-def addReview(review, flash_details = False):
+def flashReview(review):
+    myflash('review item: {}'.format(review.review_item.name))
+    myflash('reviewed        : {}'.format(review.review_date.strftime(DATETIME_FMT_DISPLAY)))
+    reviewer = getUser(id=review.reviewer_id)
+    myflash('reviewer        : {}'.format(reviewer.shortname))
+    myflash('note        : {}'.format(review.note))
+    myflash('approved        : {}'.format(review.approved))
+
+
+def addReview(review, flash_details=False):
     ret = False
     try:
+        db = get_db()
         item = Review.query.filter_by(id=review.id).first()
         if item is None:
             nMax = Review.query.with_entities(db.func.max(Review.id)).scalar()
@@ -240,63 +298,66 @@ def addReview(review, flash_details = False):
             review.id = nMax + 1
             db.session.add(review)
             db.session.commit()
-            flash("""New review "{i}" has been added to the database.""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY)))
+            myflash("""New review "{i}" has been added to the database.""".format(
+                i=review.review_date.strftime(DATETIME_FMT_DISPLAY)))
             if flash_details:
                 flashReview(review)
             ret = True
         else:
-            flash("""review "{i}" already exists in the database.""".format(i=review.id))
+            myflash("""review "{i}" already exists in the database.""".format(i=review.id))
     except Exception as e:
-        flash(str(e))
+        myflash(str(e))
     return ret
 
 
-def updateReview(review_in, flash_details = False):
+def updateReview(review_in, flash_details=False):
     ret = False
     try:
+        db = get_db()
         review = Review.query.filter_by(id=review_in.id).first()
         if review is not None:
-            #review_item.name = review_item_in.name
+            # review_item.name = review_item_in.name
             review.review_date = review_in.review_date
             review.reviewer_id = review_in.reviewer_id
             review.note = review_in.note
             review.approved = review_in.approved
             db.session.commit()
-            flash("""Updated review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY), ri=review.review_item.name))
+            myflash("""Updated review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY),
+                                                               ri=review.review_item.name))
             if flash_details:
                 flashReview(review)
             ret = True
         else:
-            flash("""review"{i}" does not exist in the database.""".format(i=review_in.review_date.strftime(DATETIME_FMT_DISPLAY)))
+            myflash("""review"{i}" does not exist in the database.""".format(
+                i=review_in.review_date.strftime(DATETIME_FMT_DISPLAY)))
     except Exception as e:
-        flash(str(e))
+        myflash(str(e))
     return ret
 
 
-
-
-def deleteReview(review_in, flash_details = False):
+def deleteReview(review_in, flash_details=False):
     ret = False
     try:
+        db = get_db()
         review = Review.query.filter_by(id=review_in.id).first()
         if review is not None:
-            msg ="""deleted review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY),
-                                                       ri=review.review_item.name)
+            msg = """deleted review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY),
+                                                             ri=review.review_item.name)
             db.session.delete(review)
             db.session.commit()
-            flash(msg)
+            myflash(msg)
             if flash_details:
                 flashReview(review)
             ret = True
         else:
-            flash("""review"{i}" does not exist in the database.""".format(i=review_in.review_date.strftime(DATETIME_FMT_DISPLAY)))
+            myflash("""review"{i}" does not exist in the database.""".format(
+                i=review_in.review_date.strftime(DATETIME_FMT_DISPLAY)))
     except Exception as e:
-        flash(str(e))
+        myflash(str(e))
     return ret
 
 
-
-def getUser(shortname = None, id = None):
+def getUser(shortname=None, id=None):
     item = None
     if shortname is not None:
         item = User.query.filter_by(shortname=shortname).first()
@@ -304,18 +365,29 @@ def getUser(shortname = None, id = None):
         item = User.query.filter_by(id=id).first()
     return item
 
-def addUser(user):
-    item = User.query.filter_by(shortname=user.shortname).first()
-    if item is None:
-        nMax = User.query.with_entities(db.func.max(User.id)).scalar()
-        if nMax is None:
-            nMax = 1
-        user.id = nMax + 1
-        ret = user.id
-        db.session.add(user)
-        flash("""New user "{u}" has been added to the database.""".format(u=user.shortname))
 
-def getReviewType(name= None, id = None ):
+def addUser(user, flash_details=False):
+    ret = None
+    try:
+        db = get_db()
+        user_queried = User.query.filter_by(shortname=user.shortname).first()
+        if user_queried is None:
+            nMax = User.query.with_entities(db.func.max(User.id)).scalar()
+            if nMax is None:
+                nMax = 1
+            user.id = nMax + 1
+            ret = user.id
+            db.session.add(user)
+            if flash_details == True:
+                myflash("""New user "{u}" has been added to the database.""".format(u=user.shortname))
+        else:
+            ret = user_queried.id
+        return ret
+    except Exception as e:
+        myflash(str(e))
+
+
+def getReviewType(name=None, id=None):
     item = None
     if name is not None:
         item = ReviewType.query.filter_by(name=name).first()
@@ -327,10 +399,15 @@ def getReviewType(name= None, id = None ):
 def showReviewItems():
     review_items = ReviewItem.query.all()
     for review_item in review_items:
-        #print(review_item.name)
-        print("review item {ri} created by {u} on {dt}".format(ri=review_item.name,u=review_item.creator.name, dt=review_item.creation_date.strftime(DATETIME_FMT_DISPLAY)))
+        # print(review_item.name)
+        print("review item {ri} created by {u} on {dt}".format(ri=review_item.name, u=review_item.creator.name,
+                                                               dt=review_item.creation_date.strftime(
+                                                                   DATETIME_FMT_DISPLAY)))
         for review in review_item.reviews:
-            print("reviewed by {u} on {dt}".format(u=review.reviewer.name, dt = review.review_date.strftime(DATETIME_FMT_DISPLAY)))
+            print("reviewed by {u} on {dt}".format(u=review.reviewer.name,
+                                                   dt=review.review_date.strftime(DATETIME_FMT_DISPLAY)))
+
+
 """
 def getData():
     '''
@@ -377,51 +454,143 @@ def getData():
 """
 
 
-#===============================================================================
+# ===============================================================================
 #  import
-#===============================================================================
+# ===============================================================================
 
-def update_from_repository_old_old():
-    #result = subprocess.run([repository_cmd, ''], stdout=subprocess.PIPE)
-    #print (result.stdout)
-    #print(subprocess.check_output(repository_cmd, shell=True))
-    #users = User.query.all()
-    #data = getData()
-    #users = User.query.all()
-    #review_types = ReviewType.query.all()
+# ===============================================================================
+#
+# ===============================================================================
 
-    output = subprocess.check_output(repository_cmd, shell=True)
-    output = output.decode('utf8')
-    output = output.replace('\r','')
-    lst = output.split('\n')
-    #remove empty strings
-    #nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
-    repository_data = list(filter(lambda x: len(x.strip()) > 0, lst))
-    repository_data = list(filter(lambda x: x.startswith("#") == False, repository_data))
-    review_type = getReviewType(name = "branch")
-    count = 0
-    for line in repository_data:
-        fields = line.split(';')
-        review_item_create_date = datetime.strptime(fields[0], DATETIME_FMT_IMPORT)
-        review_item_name = fields[1]
-        creator = getUser(shortname = fields[2])
-        if creator is None:
-            user = User(id=None, name= fields[2], shortname= fields[2], note=None, from_date=datetime.now(), to_date=None)
-            creator_id = addUser(user)
-            creator = getUser(shortname = fields[2])
-        review_item = ReviewItem(id = None,
-                                 name=review_item_name,
-                                 review_type_id=review_type.id,
-                                 reviewed_aspect='',
-                                 creation_date = review_item_create_date,
-                                 creator_id = creator.id)
-        if addReviewItem(review_item):
-            count +=1
-    if count == 0:
-         flash("No new items found in repository!")
+class ImportReviewItem(gencls.Item):
+    def __init__(self, name=None, creator_id=None, creation_date=None, last_commit_dt=None, note=None, review_type_id = None):
+        super(gencls.Item, self).__init__()
+        self.review_item =  ReviewItem(id=None,
+                                     name=name,
+                                     review_type_id=review_type_id,
+                                     reviewed_aspect=note,
+                                     creation_date=creation_date,
+                                     creator_id=creator_id)
+        self.last_commit_dt = last_commit_dt
+        self.new_user = None
+
+    def toString(self):
+        sep = ','
+        s = ""
+        if self.review_item.creation_date is not None:
+            s += self.review_item.creation_date.strftime("%Y-%m-%d") + sep
+        else:
+            s += "" + sep
+        #if self.last_commit_dt is not None:
+        #    s += self.last_commit_dt.strftime("%Y-%m-%d") + sep
+        #else:
+        #    s += "" + sep
+        if self.review_item.review_type_id is not None:
+            s += str(self.review_item.review_type_id) + sep
+        else:
+            s += "" + sep
+        if self.review_item.name is not None:
+            s += self.review_item.name + sep
+        else:
+            s += "" + sep
+        if self.review_item.reviewed_aspect is not None:
+            s += self.review_item.reviewed_aspect + sep
+        else:
+            s += "" + sep
+        if self.review_item.creator_id is not None:
+            s += str(self.review_item.creator_id)
+        elif self.new_user is not None:
+            s += self.new_user.shortname
+        else:
+            s += ""
+        return s
+
+# -----------------------------------------------------------------------------------------------------------------
+class ImportReview(gencls.Item):
+    def __init__(self, name=None, reviewer_id=None, review_date=None, note=None, review_item_id = None,approved = False ):
+        super(gencls.Item, self).__init__()
+        self.review = Review(id=None,
+                        approved=approved,
+                        note=note,
+                        review_date=review_date,
+                        review_item_id=review_item_id,
+                        reviewer_id=reviewer_id)
+        self.new_user = None
+
+    def toString(self):
+        sep = ','
+        s = ""
+        if self.review.review_date is not None:
+            s += self.review.review_date.strftime("%Y-%m-%d") + sep
+        else:
+            s += "" + sep
+        if self.review.review_item_id is not None:
+            s += str(self.review.review_item_id) + sep
+        else:
+            s += "" + sep
+        if self.review.note is not None:
+            s += self.review.note + sep
+        else:
+            s += "" + sep
+        if self.review.reviewer_id is not None:
+            s += self.review.reviewer_id
+        elif self.new_user is not None:
+            s += self.new_user.shortname
+        else:
+            s += ""
+        if self.review.approved is not None and self.review.approved == True:
+            s += "yes" + sep
+        else:
+            s += "no" + sep
+        return s
 
 
-def update_from_repository_old():
+
+
+# -----------------------------------------------------------------------------------------------------------------
+def getDate(str):
+    review_date = None
+    #28-Nov-18
+    #04/12/2018
+    datefmts = [DATETIME_FMT_IMPORT, "%d-%b-%y", "%d/%m-%Y"]
+    for datefmt in datefmts:
+        try:
+            review_date = datetime.strptime(str, DATETIME_FMT_IMPORT)
+            break
+        except Exception as e:
+            pass
+    return review_date
+
+
+# -----------------------------------------------------------------------------------------------------------------
+def import_review_items(review_items):
+    count_new_review_items = 0
+    count_new_users = 0
+    for import_item in review_items:
+        #print (import_item.toString())
+        if import_item.new_user is not None:
+            creator_id = addUser(import_item.new_user)
+            #creator = getUser(shortname=import_item.new_user.shortname)
+            import_item.review_item.creator_id = creator_id
+        if addReviewItem(import_item.review_item):
+             count_new_review_items += 1
+
+def import_reviews(reviews):
+    count_new_reviews = 0
+    count_new_users = 0
+    for import_item in reviews:
+        #print (import_item.toString())
+        if import_item.new_user is not None:
+            creator_id = addUser(import_item.new_user)
+            #creator = getUser(shortname=import_item.new_user.shortname)
+            import_item.review.reviewer_id = creator_id
+        if addReview(import_item.review):
+             count_new_reviews += 1
+
+
+
+# -----------------------------------------------------------------------------------------------------------------
+def update_from_file(has_request=True):
     '''
       @info import from a file:
 
@@ -433,98 +602,226 @@ def update_from_repository_old():
             07.11.2018;logged error review;EXAA Downloader;;rudnikp;renzt;07.11.2018;
     :return:
     '''
+    global use_flash
+    if has_request == False:
+        use_flash = False
 
     # DATETIME_FMT_IMPORT = '%d/%m/%Y %H:%M'
     DATETIME_FMT_IMPORT = '%d.%m.%Y'
-    repository_update = 'e:/development/temp/FlaskWebServer/update_from_repository.txt'
-    repository_cmd = 'more "C:/workspace/data/temp/CodeReviewApp/update_from_repository.txt"'
-
-    #result = subprocess.run([repository_cmd, ''], stdout=subprocess.PIPE)
-    #print (result.stdout)
-    #print(subprocess.check_output(repository_cmd, shell=True))
-    #users = User.query.all()
-    #data = getData()
     users = User.query.all()
     review_types = ReviewType.query.all()
 
-    output = subprocess.check_output(repository_cmd, shell=True)
-    output = output.decode('utf8')
-    output = output.replace('\r','')
-    lst = output.split('\n')
-    #remove empty strings
-    #nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
-    repository_data = list(filter(lambda x: len(x.strip()) > 0, lst))
-    repository_data = list(filter(lambda x: x.startswith("#") == False, repository_data))
-    review_type = getReviewType(name = "branch")
-    count = 0
-    for line in repository_data:
-        fields = line.split(';')
-        #print(fields)
-        #continue
-        review_item_create_date = datetime.strptime(fields[0], DATETIME_FMT_IMPORT)
-        review_type = getReviewType(name=fields[1])
-        review_item_name = fields[2]
-        reviewed_aspect = fields[3]
-        creator = getUser(shortname = fields[4])
-        if creator is None:
-            user = User(id=None, name= fields[4], shortname= fields[4], note=None, from_date=datetime.now(), to_date=None)
-            creator_id = addUser(user)
-            creator = getUser(shortname = fields[4])
-        review_item = ReviewItem(id = None,
-                                 name=review_item_name,
-                                 review_type_id=review_type.id,
-                                 reviewed_aspect=reviewed_aspect,
-                                 creation_date = review_item_create_date,
-                                 creator_id = creator.id)
-        if addReviewItem(review_item):
-            count +=1
-        if len(fields)>=7 and len(fields[5].strip()) > 0:
-            reviewer = getUser(shortname=fields[5])
-            review_date = datetime.strptime(fields[6], DATETIME_FMT_IMPORT)
-            review_note = ""
-            if len(fields)>=8:
-                review_note = fields[7]
-            review = Review
-            review = Review(id=None, approved=True,
-                                          note=review_note,
-                                          review_date=review_date,
-                                          review_item_id=review_item.id,
-                                          reviewer_id=reviewer.id)
-            addReview(review, flash_details = True)
-
-
-    if count == 0:
-         flash("No new items found in repository!")
-
-
-def get_update_from_repository():
-
-    #filename = "E:/Development/temp/FlaskWebServer/svn_braches_export_jan_2019.xml"
-    filename = cf.config.get_file_svn_xml()
+    filename = cf.config.get_file_csv()
     if os.path.isfile(filename) == False:
-        raise ValueError("Could not find {f}".format(f=filename))
+        myflash("File does not exist file {f}".format(f=filename))
+        return
 
-    f = open(filename,'r')
-    return f.read()
+    try:
+        with open(filename, "r") as inFile:
+            # output = inFile.read()
 
-    DATETIME_FMT_IMPORT = '%d.%m.%Y'
-    repository_update = config.import_from_csv_file
-    repository_cmd = 'CMD /S /C svn list --xml http://RBIKARMGTP001V.b2b.regn.net:8080/svn/Paula_Python/branches'
-    #result = subprocess.run([repository_cmd, ''], stdout=subprocess.PIPE)
-    #print (result.stdout)
-    #print(subprocess.check_output(repository_cmd, shell=True))
-    #users = User.query.all()
-    #data = getData()
-    users = User.query.all()
-    review_types = ReviewType.query.all()
+            # output = output.decode('utf8')
+            # output = output.replace('\r','')
+            # lst = output.split('\n')
+            # remove empty strings
+            # nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
+            # repository_data = list(filter(lambda x: len(x.strip()) > 0, lst))
+            # repository_data = list(filter(lambda x: x.startswith("#") == False, repository_data))
+            #review_type = getReviewType(name="branch")
+            # review_types = ReviewType.query.all()
+            #review_type = getReviewType(name="branch")
 
+            note = "by import {dt}".format(dt=datetime.now().strftime("%Y-%m-%d %H:%M"))
+            review_items = gencls.ItemColl()
+            reviews = gencls.ItemColl()
+            count_review_items = 0
+            count_reviews = 0
+            for line in inFile:
+                str = line.strip()
+                if (len(str) == 0):
+                    continue
+                if str.startswith("#"):
+                    continue
+
+                fields = line.split(',')
+                for index, field in enumerate(fields):
+                    fields[index] = field.strip()
+                # print(fields)
+                # continue
+
+                review_item = getReviewItem(name = fields[2])
+                if review_item is not None:
+                    item = ImportReviewItem(review_type_id=review_type.id, note=note)
+
+                    item.review_item.creation_date = datetime.strptime(fields[0], DATETIME_FMT_IMPORT)
+                    review_type = getReviewType(name=fields[1])
+                    if review_type is None:
+                        myflash("Unknown review type: {rt}".format(rt=review_type))
+                        continue
+                    item.review_item.review_type_id = review_type.id
+                    item.review_item.name = fields[2]
+                    item.review_item.reviewed_aspect = fields[3]
+                    creator = getUser(shortname=fields[4])
+                    if creator is None:
+                        shortname = fields[4]
+                        item.new_user = User(id=None, name=shortname, shortname=shortname, note=note,
+                                             from_date=item.review_item.creation_date,
+                                             to_date=None)
+                    else:
+                        item.review_item.creator_id = creator.id
+                    review_items.add(item)
+                    count_review_items += 1
+                    review_item = getReviewItem(name=fields[2])
+
+
+                # handle reviews
+                if len(fields) >= 7 and len(fields[5].strip()) > 0:
+
+
+
+                    item = ImportReview(review_item_id=review_item.id)
+                    item.review.review_date = getDate(fields[6])
+                    if item.review.review_date is None:
+                        myflash("Cound not identifiy review date: {dt} for review item {ri}".format(dt=fields[6],
+                                                                                                    ri=item.review_item.name))
+                        continue
+
+                    reviewer = getUser(shortname=fields[5])
+                    if reviewer is None:
+                        shortname = fields[5]
+                        item.new_user = User(id=None, name=shortname, shortname=shortname, note=note,
+                                             from_date=item.review_item.creation_date,
+                                             to_date=None)
+                    else:
+                        item.review.reviewer_id = reviewer.id
+                        #is the reviewalready in? identify by date and user
+                        #don't know the user id, but if it a new user then it must be a new review
+                        review = getReview(reviewer_id=reviewer.id, review_date=item.review.review_date)
+                        if review is not None:
+                            continue
+
+                    review_note = ""
+                    if len(fields) >= 8:
+                        item.review.note = fields[7]
+                    reviews.add(item)
+                    count_reviews += 1
+
+            if count_review_items == 0:
+                myflash("No new review items found in repository!")
+            else:
+                # review_item_list_sorted = review_item_list.coll.sort(key = lambda x: x.dt, reverse=False )
+                review_items.sort(key=lambda x: x.review_item.creation_date, reverse=False)
+                # for item in review_item_list:
+                #    print(item.toString())
+                filename = cf.config.get_file_csv()
+                filename = filename.replace(".csv", "_review_items.csv")
+                # csv_file = fil.changeExtension(svn_file, ".csv")
+                with open(filename, 'w') as outFile:
+                    for item in review_items:
+                        outFile.write(item.toString().decode('utf8') + "\n")
+                import_review_items(review_items)
+
+            if count_reviews == 0:
+                myflash("No new reviews found in repository!")
+            else:
+                # review_item_list_sorted = review_item_list.coll.sort(key = lambda x: x.dt, reverse=False )
+                reviews.sort(key=lambda x: x.review.review_date, reverse=False)
+                # for item in review_item_list:
+                #    print(item.toString())
+                filename = cf.config.get_file_csv()
+                filename = filename.replace(".csv", "_reviews.csv")
+                # csv_file = fil.changeExtension(svn_file, ".csv")
+                with open(filename, 'w') as outFile:
+                    for item in reviews:
+                        outFile.write(item.toString().decode('utf8') + "\n")
+                import_reviews(review_items)
+
+
+    except Exception as e:
+        myflash("Unable to read file {f} : {e}".format(f=filename, e=str(e)))
+
+
+
+# -----------------------------------------------------------------------------------------------------------------
+def export_svn_branches_to_xml():
+    svn_url = cf.config.get_svn_url()
+    repository_cmd = "CMD /S /C svn list --xml {svn_url}".format(svn_url=svn_url)
+    # result = subprocess.Popen([repository_cmd, ''], stdout=subprocess.PIPE)
     output = subprocess.check_output(repository_cmd, shell=True)
-    #output = output.decode('utf8')
-    output = output.replace('\r','')
-    output = output.replace('\n', '')
-    #lst = output.split('\n')
+
+    filename = cf.config.get_file_svn_xml()
+    with open(filename, 'w') as outFile:
+        outFile.write(output.decode('utf8'))
+
+# -----------------------------------------------------------------------------------------------------------------
+def update_from_repository(has_request=True, skip_export=False):
+    global use_flash
+    if has_request == False:
+        use_flash = False
+
+    if skip_export == False:
+        export_svn_branches_to_xml()
+
+    filename = cf.config.get_file_svn_xml()
+    with open(filename, 'r') as inFile:
+        output = inFile.read()
+        #output = output.decode('utf8')
+
+    try:
+        root = ET.fromstring(output)
+    except Exception as e:
+        print str(e)
+
+    #review_types = ReviewType.query.all()
+    review_type = getReviewType(name=u"branch")
+
+    note = "by import {dt}".format(dt=datetime.now().strftime("%Y-%m-%d %H:%M"))
+    review_items = gencls.ItemColl()
+    for el in root.findall('list/entry'):
+        # print (el)
+        item = ImportReviewItem(review_type_id = review_type.id, note = note)
+        item.review_item.name = el.find('name').text.decode("utf8")
+        result = re.search("([0-9]{4}).([0-9]{2}).([0-9]{2})",  item.review_item.name, re.IGNORECASE)
+        if result != None:
+            try:
+                item.review_item.creation_date = datetime(year=int(result.group(1)), month=int(result.group(2)), day=int(result.group(3)))
+            except Exception as e:
+                print ("branch ignored: {n} date conversion error: {e}".format(n=item.review_item.name, e=str(e)))
+                continue
+        else:
+            print ("branch ignored: {n}".format(n=item.review_item.name))
+            continue
+        shortname = el.find('commit/author').text.decode("utf8")
+        creator = getUser(shortname=shortname)
+        if creator is None:
+            item.new_user = shortname
+            item.new_user = User(id=None, name=shortname, shortname=shortname, note=note, from_date=item.review_item.creation_date,
+                    to_date=None)
+        else:
+            item.review_item.creator_id = creator.id
+
+        item.last_commit_dt = datetime.strptime(el.find('commit/date').text, _DATETIME_FMT_SVN_XML)
+
+        review_items.add(item)
+
+    # review_item_list_sorted = review_item_list.coll.sort(key = lambda x: x.dt, reverse=False )
+    review_items.sort(key=lambda x: item.review_item.creation_date, reverse=False)
+
+    # for item in review_item_list:
+    #    print(item.toString())
+
+    filename = cf.config.get_file_svn_xml()
+    filename = filename.replace(".xml",".csv")
+    #csv_file = fil.changeExtension(svn_file, ".csv")
+    with open(filename, 'w') as outFile:
+        for item in review_items:
+            outFile.write(item.toString().decode('utf8') + "\n")
+
+    import_review_items(review_items)
 
 
+# -----------------------------------------------------------------------------------------------------------------
+"""
 def update_from_repository():
     '''
       @info import from a file:
@@ -546,8 +843,8 @@ def update_from_repository():
         root = ET.fromstring(output)
     except Exception as e:
         print str(e)
-    #remove empty strings
-    #nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
+    # remove empty strings
+    # nMax = ReviewItem.query.with_entities(db.func.max(ReviewItem.id)).scalar()
 
     lst = list()
     repository_data = list(filter(lambda x: len(x.strip()) > 0, lst))
@@ -559,34 +856,32 @@ def update_from_repository():
     for el in root.findall('list/entry'):
         print (el)
         name = el.find('name').text
-        #if name
+        # if name
 
-        name =  el.find('name').text
+        name = el.find('name').text
         creator_name = el.find('commit/author').text
-        creation_date =  datetime.strptime(el.find('commit/date').text, _datefmt_svn_xml)
+        creation_date = datetime.strptime(el.find('commit/date').text, _datefmt_svn_xml)
         review_type = getReviewType(name="branch")
-        creator = getUser(shortname = creator_name)
+        creator = getUser(shortname=creator_name)
         if creator is None:
-            user = User(id=None, name= creator_name, shortname= creator_name, note=None, from_date=datetime.now(), to_date=None)
+            user = User(id=None, name=creator_name, shortname=creator_name, note=None, from_date=datetime.now(),
+                        to_date=None)
             creator_id = addUser(user)
-            creator = getUser(shortname = creator_name)
-        review_item = ReviewItem(id = None,
+            creator = getUser(shortname=creator_name)
+        review_item = ReviewItem(id=None,
                                  name=name,
                                  review_type_id=review_type.id,
                                  reviewed_aspect="",
-                                 creation_date = creation_date,
-                                 creator_id = creator.id)
-        if addReviewItem(review_item, flash_details = True):
-            count +=1
+                                 creation_date=creation_date,
+                                 creator_id=creator.id)
+        if addReviewItem(review_item, flash_details=True):
+            count += 1
     if count == 0:
-         flash("No new items found in repository!")
+        myflash("No new items found in repository!")
+"""
 
-
-
-
-
-#===============================================================================
+# ===============================================================================
 # controlling functions
-#===============================================================================
+# ===============================================================================
 if __name__ == "__main__":
-    update_from_repository()
+    pass

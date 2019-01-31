@@ -1,11 +1,8 @@
-import database as db
+import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
 from flask import render_template, flash, redirect
 from flask import Flask, jsonify, request, url_for, Response
-from datetime import datetime
-
-import database as db
 from datetime import datetime
 import dateutil.rrule as rrule
 import calendar
@@ -136,9 +133,10 @@ def getUserAnalysis():
         gets user evaluations form db
     :return: user evaluations
     """
-    users = db.User.query.all()
-    review_items = db.ReviewItem.query.all()
-    reviews = db.Review.query.all()
+    #db = database.get_db()
+    users = database.User.query.all()
+    review_items = database.ReviewItem.query.all()
+    reviews = database.Review.query.all()
     userAnalysys = UserAnalysis(users, review_items, reviews)
     return userAnalysys
 
@@ -197,8 +195,9 @@ class Results(object):
 
 
 def getResults():
-    review_items = db.ReviewItem.query.all()
-    reviews = db.Review.query.all()
+    #db = database.get_db()
+    review_items = database.ReviewItem.query.all()
+    reviews = database.Review.query.all()
     results = Results(review_items, reviews)
 
     # results.review_item_count = len(review_items)

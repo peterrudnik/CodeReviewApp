@@ -1,30 +1,36 @@
+# -*- coding: utf-8 -*-
 """Script for initializing your database.
 
 Note that dropping your existing tables is an opt-in operation.
 If you want to drop tables before you create tables, set an environment
 variable called "DEVELOPMENT" to be "True".
 """
-from app_svn_branches.app import db, create_app
+from app_svn_branches.app import create_app
 from app_svn_branches.database import ReviewItem, Review, ReviewType, User
 from datetime import datetime, timedelta
 from random import randint
-
-
-from database import db
+import database
 
 #if bool(os.environ.get('DEVELOPMENT', '')):
 #    db.drop_all()
 
 def create_db():
     app = create_app()
-    db.drop_all(app = app)
-    db.create_all(app = app)
-
     with app.app_context():
+        db = database.get_db()
+        db.drop_all(app = app)
+        db.create_all(app = app)
+
+
         db.session.add(ReviewType(id=1, name=u"branch"))
         db.session.add(ReviewType(id=2, name=u"function"))
         db.session.add(ReviewType(id=3, name=u"error"))
         db.session.add(ReviewType(id=4, name=u"module"))
+        db.session.add(ReviewType(id=5, name=u"logged error review"))
+        db.session.add(ReviewType(id=6, name=u"process"))
+        db.session.add(ReviewType(id=7, name=u"class"))
+        db.session.add(ReviewType(id=8, name=u"unknown"))
+
 
         from_date = datetime(year=2018, month=1, day=1)
         db.session.add(User(id=1, name=u"heinz", shortname=u"hz", note=u"developer", from_date=from_date, to_date=None))
@@ -37,6 +43,7 @@ def create_db():
         db.session.add(User(id=8, name=u"monika", shortname=u"mk", note=u"developer", from_date=from_date, to_date=None))
         db.session.add(User(id=9, name=u"klaus", shortname=u"kl", note=u"developer", from_date=from_date, to_date=None))
         db.session.add(User(id=10, name=u"gernot", shortname=u"gt", note=u"developer", from_date=from_date, to_date=None))
+        db.session.add(User(id=10, name=u"плакучая ива", shortname=u"gt", note=u"developer", from_date=from_date, to_date=None))
 
         review_id = 1
         for i in range(1,20):
@@ -80,10 +87,23 @@ def create_db():
                                     reviewer_id=reviewer_id, review_item_id=review_item_id)
                     db.session.add(review)
                     review_id += 1
-
         db.session.commit()
+
+def update_from_file(has_request= False):
+    app = create_app()
+    with app.app_context():
+        database.update_from_file(has_request= has_request)
+
+
+def update_from_repository(has_request= False, skip_export = True):
+    app = create_app()
+    with app.app_context():
+        database.update_from_repository(has_request= has_request, skip_export = skip_export)
+
 #===============================================================================
 # controlling functions
 #===============================================================================
 if __name__ == "__main__":
     create_db()
+    #update_from_file()
+    #update_from_repository()
