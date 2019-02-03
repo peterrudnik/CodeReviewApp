@@ -17,7 +17,7 @@ from datetime import datetime
 import dateutil.rrule as rrule
 import calendar
 #import secrets
-#from app_svn_branches.config import Config
+#from app_svn_branches.c    onfig import Config
 #from app_svn_branches.config import Config
 import app_svn_branches.config as config_module
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
@@ -65,6 +65,11 @@ def format_datetime(value, format='medium'):
     else:
         return "na"
 
+def filter_path(value, path):
+    if value.startswith(path):
+        return "highlight-menu"
+    else:
+        return "na"
 
 
 def create_app():
@@ -92,6 +97,7 @@ def create_app():
     app.register_blueprint(view_user.blueprint, url_prefix='/user')
     app.register_blueprint(view_analysis.blueprint, url_prefix='/analysis')
     app.jinja_env.filters['datetime'] = format_datetime
+    app.jinja_env.filters['filterpath'] = filter_path
     # auth = HTTPTokenAuth(scheme='Token')
     #db = SQLAlchemy(app)
     # a = SQLAlchemy

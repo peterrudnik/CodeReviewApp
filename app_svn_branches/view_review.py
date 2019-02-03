@@ -15,7 +15,7 @@ def new_review(review_item_id):
     #db = database.get_db()
     review_item = database.getReviewItem(id=review_item_id)
     form = FormNewReview()
-    form.reviewer.choices = [(g.id, g.shortname) for g in db.User.query.order_by('shortname')]
+    form.reviewer.choices = [(g.id, g.shortname) for g in database.User.query.order_by('shortname')]
 
     #if form.validate_on_submit():
     if request.method == 'POST':
@@ -29,7 +29,9 @@ def new_review(review_item_id):
                                           note=form.note.data,
                                           review_date=datetime.strptime(form.reviewed.data, DATETIME_FMT_FORM),
                                           review_item_id=review_item.id,
-                                          reviewer_id=reviewer.id)
+                                          reviewer_id=reviewer.id,
+                                          errors = form.errors.data,
+                                          duration = form.duration.data)
             database.addReview(form_review, flash_details = True)
             return render_template('messages.html')
     elif request.method == 'GET':
@@ -49,6 +51,8 @@ def edit_review(id):
         form.reviewer.data = review.reviewer.id
         form.approved.data = review.approved
         form.note.data = review.note
+        form.errors.data = review.errors
+        form.duration.data = review.duration
 
     #if form.validate_on_submit():
     if request.method == 'POST':
@@ -62,7 +66,10 @@ def edit_review(id):
                                           note=form.note.data,
                                           review_date=review.review_date,
                                           review_item_id = review.review_item_id,
-                                          reviewer_id=reviewer.id)
+                                          reviewer_id=reviewer.id,
+                                          errors = form.errors.data,
+                                          duration = form.duration.data
+                                          )
             database.updateReview(form_review, flash_details = True)
             return render_template('messages.html')
     elif request.method == 'GET':
@@ -81,6 +88,8 @@ def delete_review(id):
         form.reviewed.data = datetime.strftime(review.review_date,DATETIME_FMT_FORM)
         form.approved.data = review.approved
         form.note.data = review.note
+        form.errors.data = review.errors
+        form.duration.data = review.duration
 
     #if form.validate_on_submit():
     if request.method == 'POST':

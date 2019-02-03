@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import Field, StringField, PasswordField, BooleanField, SubmitField, DateTimeField, SelectField
+from wtforms import Field, StringField, PasswordField, BooleanField, SubmitField, DateTimeField, SelectField, IntegerField
 from wtforms.validators import DataRequired, InputRequired, ValidationError
 from wtforms.fields.html5 import DateTimeLocalField, DateTimeField, DateField
 from wtforms import widgets
@@ -69,7 +69,7 @@ class FormNewReviewItem(FlaskForm):
     review_item = StringField('review item', validators=[InputRequired()])
     creator = SelectField('creator', coerce=int,validators=[DataRequired()])
     review_type = SelectField('review type', coerce=int,validators=[InputRequired()])
-    reviewed_aspect = StringField('reviewed aspect')
+    note = StringField('note')
     submit = SubmitField('submit')
 
 class FormEditReviewItem(FlaskForm):
@@ -80,7 +80,7 @@ class FormEditReviewItem(FlaskForm):
     #review_item = StringField('review item', validators=[InputRequired()])
     creator = SelectField('creator', coerce=int,validators=[DataRequired()])
     review_type = SelectField('review type', coerce=int,validators=[InputRequired()])
-    reviewed_aspect = StringField('reviewed aspect')
+    note = StringField('note')
     submit = SubmitField('submit')
 
 class FormNewReview(FlaskForm):
@@ -91,6 +91,8 @@ class FormNewReview(FlaskForm):
     reviewed= StringField('reviewed', validators=[DataRequired(), DatetimeFormatValidator(format=DATETIME_FMT_FORM)])
     reviewer = SelectField('reviewer', coerce=int)
     approved = BooleanField('approved')
+    duration = IntegerField('duration')
+    errors = IntegerField('errors')
     note = StringField('note')
     submit = SubmitField('submit')
 
@@ -103,4 +105,6 @@ class FormEditReview(FlaskForm):
     reviewer = SelectField('reviewer', coerce=int)
     approved = BooleanField('approved')
     note = StringField('note')
+    duration = IntegerField('duration')
+    errors = IntegerField('errors')
     submit = SubmitField('submit')

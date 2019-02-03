@@ -36,7 +36,8 @@ def index():
 @blueprint.route('/update')
 def update():
     #db = database.get_db()
-    database.update_from_repository()
+    #database.update_from_repository()
+    database.update_from_file()
     return render_template('messages.html', results=view_analysis.getResults())
     # return render_template('reviewed_items.html', title='Code reviews', data=getData())
 
@@ -49,6 +50,14 @@ def show_about():
     about.append("last change: Jan 2019 ")
 
     return render_template('about.html', about=about, results=view_analysis.getResults())
+
+
+#@blueprint.route('/progress/<percent>', methods=['GET'])
+@blueprint.route('/progress/<percent>', methods=['GET'])
+def show_progress(percent):
+    #for i in range(10)
+    progress = str(percent)
+    return render_template('progress.html', progress=progress, results=view_analysis.getResults())
 
 # @app.route('/mylogin')
 # def mylogin():

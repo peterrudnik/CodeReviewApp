@@ -6,24 +6,42 @@
         <thead>
             <tr>
                 <th></th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/creation_date/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/creation_date/desc"></a>created</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/name/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/name/desc"></a>review item</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/creator/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/creator/desc"></a>creator</th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/review_type/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/review_type/desc"></a>review type</th>
+                <th>created</th>
+                <th>review item</th>
+                <th>creator</th>
+                <th>review type</th>
                 <th>note</th>
                 <th></th>
                 <th>reviewed</th>
                 <th></th>
-                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/reviewer/asc"></a>
-                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/reviewer/desc"></a> reviewer</th>
+                <th>reviewer</th>
                 <th>approved</th>
+                <th>duration</th>
+                <th>errors</th>
                  <th>note</th>
             </tr>
-        </thead>
+            <tr>
+                <th></th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/creation_date/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/creation_date/desc"></a></th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/name/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/name/desc"></a></th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/creator/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/creator/desc"></a></th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/review_type/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/review_type/desc"></a></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th><a class ="fa fa-sort-amount-asc sort-icon" href="/review_item/sort/reviewer/asc"></a>
+                    <a class ="fa fa-sort-amount-desc sort-icon" href="/review_item/sort/reviewer/desc"></a></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+           </tr>
+         </thead>
         <tbody>
            {% for review_item in review_items %}
             <tr>
@@ -33,7 +51,7 @@
                 <td><span class="review-item-text">{{review_item.name}}</span></td>
                 <td><span class="review-item-text">{{review_item.creator.name}}</span></td>
                 <td><span class="review-item-text">{{review_item.review_type.name}}</span></td>
-                <td><span class="review-item-text">{{review_item.reviewed_aspect}}</span></td>
+                <td><span class="review-item-text">{{review_item.note}}</span></td>
                 <td><a class ="fa  fa-plus-square-o new-icon" href="/review/new/{{review_item.id}}"></a></td>
                 <!--
                 <td>reviews: {{review_item.reviews|length}}</td>
@@ -50,6 +68,12 @@
                             {% else %}
                                 <td><span class = "warning">{{review.approved}}</span></td>
                             {% endif %}
+                            {% if review.duration %}
+                               <td><span class = "review-text">{{review.duration}}</span></td>
+                            {% else %}
+                                <td><span class = "review-text"></span></td>
+                            {% endif %}
+                            <td><span class = "review-text">{{review.errors}}</span></td>
                             <td><span class = "review-text">{{review.note}}</span></td>
                         {% else %}
                             <tr>
@@ -69,12 +93,20 @@
                                 {% else %}
                                     <td><span class = "warning">{{review.approved}}</span></td>
                                 {% endif %}
+                                {% if review.duration %}
+                                   <td><span class = "review-text">{{review.duration}}</span></td>
+                                {% else %}
+                                    <td><span class = "review-text"></span></td>
+                                {% endif %}
+                                   <td><span class = "review-text">{{review.errors}}</span></td>
                                <td><span class = "review-text">{{review.note}}</span></td>
                             </tr>
                         {% endif %}
                     {% endfor %}
                 {% else %}
                     <td><span class = "warning">no review</span></td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>

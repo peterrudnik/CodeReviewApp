@@ -66,7 +66,9 @@ def getReviewIntervals(startdate, enddate):
     dt_year_range = rrule.rrule(rrule.YEARLY, dtstart=startdate, until=enddate)
     for dt in dt_year_range:
         name = dt.strftime("%Y")
-        period_startdate, period_enddate = getBeginningAndEndOfMonth(dt)
+        #period_startdate, period_enddate = getBeginningAndEndOfMonth(dt)
+        period_startdate = dt.replace(month = 1, day = 1)
+        period_enddate = dt.replace(month=12, day=31)
         lst.append(ReviewInterval(name, period_startdate, period_enddate))
 
     dt_month_range = rrule.rrule(rrule.MONTHLY, dtstart=startdate, until=enddate)

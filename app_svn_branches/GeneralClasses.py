@@ -175,9 +175,7 @@ class ItemColl(object):
         """
         self.coll.sort(key=key, reverse=reverse)
 
-    # ===============================================================================
-
-
+# ===============================================================================
 # general mapping class
 # ===============================================================================
 class XUnit(object):
@@ -224,3 +222,28 @@ class XMappingColl(object):
     def __len__(self):
         return len(self.coll)
 
+# ===============================================================================
+# line splitter
+# ===============================================================================
+
+class LineSplitter(object):
+    def __init__(self):
+        pass
+    @staticmethod
+    def split(s,quotechar =u'"', splitchar = u","):
+        ret = list()
+        if s:
+            isInQuotedString = False
+            sub_s = ""
+            for ch in s:
+                if ch == quotechar:
+                     isInQuotedString = not isInQuotedString
+                elif ch == splitchar and isInQuotedString == False:
+                    ret.append(sub_s)
+                    sub_s = ""
+                else:
+                    sub_s += ch
+
+            if sub_s:
+                ret.append(sub_s)
+        return ret

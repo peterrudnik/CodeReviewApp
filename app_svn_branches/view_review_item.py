@@ -33,7 +33,7 @@ def new_review_item():
             review_type = database.getReviewType(id=form.review_type.data)
             creator = database.getUser(id=form.creator.data)
             form_review_item = database.ReviewItem(id=None, name=form.review_item.data, review_type_id=review_type.id,
-                                          reviewed_aspect='new function x',
+                                          note='new function x',
                                           creation_date=datetime.strptime(form.created.data, DATETIME_FMT_FORM),
                                           creator_id=creator.id)
             database.addReviewItem(form_review_item, flash_details = True)
@@ -50,7 +50,7 @@ def edit_review_item(id):
     review_item = database.getReviewItem(id=id)
     if request.method == 'GET':
         form.created.data= datetime.strftime(review_item.creation_date,DATETIME_FMT_FORM)
-        form.reviewed_aspect.data = review_item.reviewed_aspect
+        form.note.data = review_item.note
         form.creator.data = review_item.creator.id
         form.review_type.data = review_item.review_type.id
     form.review_type.choices = [(g.id, g.name) for g in database.ReviewType.query.order_by('name')]
@@ -66,7 +66,7 @@ def edit_review_item(id):
             review_type = database.getReviewType(id=form.review_type.data)
             creator = database.getUser(id=form.creator.data)
             form_review_item = database.ReviewItem(id=review_item.id, name=review_item.name, review_type_id=review_type.id,
-                                          reviewed_aspect=form.reviewed_aspect.data,
+                                          note=form.note.data,
                                           creation_date=datetime.strptime(form.created.data, DATETIME_FMT_FORM),
                                           creator_id=creator.id)
             database.updateReviewItem(form_review_item, flash_details = True)
@@ -84,7 +84,7 @@ def delete_review_item(id):
     if request.method == 'GET':
         form.review_item.data = review_item.name
         form.created.data= datetime.strftime(review_item.creation_date,DATETIME_FMT_FORM)
-        form.reviewed_aspect.data = review_item.reviewed_aspect
+        form.note.data = review_item.note
         form.creator.data = review_item.creator.id
         form.review_type.data = review_item.review_type.id
     form.review_type.choices = [(g.id, g.name) for g in database.ReviewType.query.order_by('name')]
