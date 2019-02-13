@@ -1,7 +1,7 @@
 import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
-from flask import render_template, flash, redirect
+from flask import render_template, flash, redirect, session
 from flask import Flask, jsonify, request, url_for, Response
 import view_analysis
 from datetime import datetime
@@ -9,6 +9,7 @@ from datetime import datetime
 import dateutil.rrule as rrule
 import calendar
 from sqlalchemy.orm import aliased
+from auth import login_required
 
 
 blueprint = Blueprint('review_item', __name__,
@@ -17,6 +18,7 @@ blueprint = Blueprint('review_item', __name__,
 
 
 @blueprint.route('/new', methods=['GET', 'POST'])
+@login_required
 def new_review_item():
     #db = database.get_db()
     form = FormNewReviewItem()
@@ -40,10 +42,11 @@ def new_review_item():
             return render_template('messages.html')
     elif request.method == 'GET':
         action_text = "new review item"
-        return render_template('review_item.html', action = "new", action_text=action_text, form = form, results= view_analysis.getResults())
+        return render_template('review_item.html', action = "new", action_text=action_text, form = form, results= view_analysis.getResults(), session = session)
 
 
 @blueprint.route('/edit/<id>', methods=['GET', 'POST'])
+@login_required
 def edit_review_item(id):
     #db = database.get_db()
     form = FormEditReviewItem()
@@ -61,7 +64,7 @@ def edit_review_item(id):
         if form.validate() == False:
             for key, value in form.errors.items():
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
-            return render_template('review_item.html', form=form)
+            return render_template('review_item.html', form=form, session = session)
         else:
             review_type = database.getReviewType(id=form.review_type.data)
             creator = database.getUser(id=form.creator.data)
@@ -70,13 +73,14 @@ def edit_review_item(id):
                                           creation_date=datetime.strptime(form.created.data, DATETIME_FMT_FORM),
                                           creator_id=creator.id)
             database.updateReviewItem(form_review_item, flash_details = True)
-            return render_template('messages.html')
+            return render_template('messages.html', session = session)
     elif request.method == 'GET':
         action_text = "edit review item {r}".format(r=review_item.name)
-        return render_template('review_item.html', action = "edit", action_text=action_text, form = form, results= view_analysis.getResults())
+        return render_template('review_item.html', action = "edit", action_text=action_text, form = form, results= view_analysis.getResults(), session = session)
 
 
 @blueprint.route('/del/<id>', methods=['GET', 'POST'])
+@login_required
 def delete_review_item(id):
     #db = database.get_db()
     form = FormNewReviewItem()
@@ -95,19 +99,20 @@ def delete_review_item(id):
         if form.validate() == False:
             for key, value in form.errors.items():
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
-            return render_template('review_item.html', form=form)
+            return render_template('review_item.html', form=form, session = session)
         else:
             database.deleteReviewItem(review_item, flash_details = True)
-            return render_template('messages.html')
+            return render_template('messages.html', session = session)
     elif request.method == 'GET':
         action_text = "delete review item {r}".format(r=review_item.name)
-        return render_template('review_item.html', action = "delete", action_text=action_text, form = form, results= view_analysis.getResults())
+        return render_template('review_item.html', action = "delete", action_text=action_text, form = form, results= view_analysis.getResults(), session = session)
 
 
 
 
 
 @blueprint.route('/sort/<field>/<direction>')
+@login_required
 def overview(field,direction):
     '''
     user_alias = aliased(db.User, name='user_alias')
@@ -145,5 +150,5 @@ def overview(field,direction):
     #db = database.get_db()
     review_items = database.ReviewItem.query.all()
     results = view_analysis.getResults()
-    return render_template('review_items.html', title='Code reviews', review_items=review_items, results= results)
+    return render_template('review_items.html', title='Code reviews', review_items=review_items, results= results, session = session)
 

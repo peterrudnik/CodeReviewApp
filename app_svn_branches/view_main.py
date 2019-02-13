@@ -1,8 +1,9 @@
 import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
-from flask import render_template, flash, redirect
+from flask import render_template, flash, redirect, session
 from flask import Flask, jsonify, request, url_for, Response
+from flask import session
 import view_analysis
 from datetime import datetime
 from datetime import datetime
@@ -33,15 +34,27 @@ def index():
     # return render_template('reviewed_items.html', title='Code reviews', data=getData())
     # @app.route('/sort_review_item/creation_date/asc')
 
-@blueprint.route('/update')
+@blueprint.route('/update', methods=['GET', 'POST'])
+@login_required
 def update():
     #db = database.get_db()
     #database.update_from_repository()
-    database.update_from_file()
-    return render_template('messages.html', results=view_analysis.getResults())
+    if request.method == 'POST':
+        players = request.form.getlist('check')
+        for player in players:
+            print (player)
+        return render_template('messages.html', session = session)
+    else:
+        ret, import_review_items, import_reviews = database.get_update_from_file()
+        if ret == False:
+        #return render_template('messages.html', results=view_analysis.getResults(), session = session)
+            return render_template('messages.html', session = session)
+        else:
+            return render_template('import.html', import_review_items=import_review_items, session = session)
     # return render_template('reviewed_items.html', title='Code reviews', data=getData())
 
 @blueprint.route('/about', methods=['GET'])
+@login_required
 def show_about():
     about = list()
     about.append("Code review app written by Peter Rudnik")
@@ -49,15 +62,16 @@ def show_about():
     about.append("project start: Dec 2018 ")
     about.append("last change: Jan 2019 ")
 
-    return render_template('about.html', about=about, results=view_analysis.getResults())
+    return render_template('about.html', about=about, results=view_analysis.getResults(), session = session)
 
 
 #@blueprint.route('/progress/<percent>', methods=['GET'])
 @blueprint.route('/progress/<percent>', methods=['GET'])
+@login_required
 def show_progress(percent):
     #for i in range(10)
     progress = str(percent)
-    return render_template('progress.html', progress=progress, results=view_analysis.getResults())
+    return render_template('progress.html', progress=progress, results=view_analysis.getResults(), session = session)
 
 # @app.route('/mylogin')
 # def mylogin():

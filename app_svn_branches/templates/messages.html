@@ -2,9 +2,15 @@
 
 {% block content %}
 
+    {% if form is defined %}
+        <form action='' method='POST' id='submitform'><button type="submit" class="submit">submit</button>
+    {% endif %}
     <table id="main">
         <thead>
             <tr>
+                {% if form is defined %}
+                <th></th>
+                {% endif %}
                 <th>Message</th>
             </tr>
         </thead>
@@ -13,6 +19,13 @@
                {% if messages %}
                   {% for message in messages %}
                         <tr>
+                            {% if form is defined %}
+                            <td>
+                                <div class="checkbox">
+                                  <label><input type="checkbox" name="check" value="{{loop.index}}"  checked></label>
+                                </div>
+                            </td>
+                            {% endif %}
                             <td>{{ message }}</td>
                         </tr>
                   {% endfor %}
@@ -24,5 +37,8 @@
             {% endwith %}
         </tbody>
     </table>
+    {% if form is defined %}
+     </form>
+    {% endif %}
 
 {% endblock %}

@@ -92,13 +92,20 @@ def create_db(bCreateTestData = False):
 def update_from_file(has_request= False):
     app = create_app()
     with app.app_context():
-        database.update_from_file(has_request= has_request)
-
+        ret, review_items, reviews = database.get_update_from_file(has_request= has_request)
+        if ret == True:
+            database.write_review_items(review_items)
+            database.write_reviews(reviews)
+            database.import_review_items(review_items)
+            database.import_reviews(reviews)
 
 def update_from_repository(has_request= False, skip_export = True):
     app = create_app()
     with app.app_context():
-        database.update_from_repository(has_request= has_request, skip_export = skip_export)
+        ret, review_items = database.get_update_from_repository(has_request= has_request, skip_export = skip_export)
+        if ret == True:
+            database.write_review_items(review_items)
+            database.import_review_items(review_items)
 
 #===============================================================================
 # controlling functions

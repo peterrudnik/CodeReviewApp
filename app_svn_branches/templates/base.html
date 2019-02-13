@@ -197,6 +197,10 @@
                       Update from repository</span></a>
                   <a href="/about"><span  id ="about" class="{{request.path|filterpath('/about')}}">
                       About</span></a>
+                 {% if session is defined  and 'user_id' in session %}
+                     <a href="/logout"><span  id ="logout" class="{{request.path|filterpath('/logout')}}">
+                          Logout</span></a>
+                  {% endif %}
                 </div>
             </div>
             <div class="content">

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <form action='' method='POST' id='submitform'><button type="submit" class="submit">submit</button>
+    <table id="main">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Item</th>
+                <th>User</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for import_review_item in import_review_items %}
+                        <tr>
+                            <td>
+                                <div class="checkbox">
+                                  <label><input type="checkbox" name="check" value="{{loop.index}}"  checked></label>
+                                </div>
+                            </td>
+                            <td>{{ import_review_item.review_item.name }}</td>
+                            <td>{{ import_review_item.user.shortname }}</td>
+                            <td>{% if import_review_item.user_is_new == true %}new{% else %}  {% endif %}</td>
+                        </tr>
+             {% endfor %}
+        </tbody>
+    </table>
+     </form>
+    <table id="messages">
+        <thead>
+            <tr>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% with messages = get_flashed_messages() %}
+               {% if messages %}
+                  {% for message in messages %}
+                        <tr>
+                            <td>{{ message }}</td>
+                        </tr>
+                  {% endfor %}
+               {% endif %}
+            {% endwith %}
+        </tbody>
+    </table>
+     </form>
+
+{% endblock %}

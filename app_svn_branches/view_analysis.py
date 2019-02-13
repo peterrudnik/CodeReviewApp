@@ -1,11 +1,12 @@
 import database
 from flask.blueprints import Blueprint
 from app_svn_branches.forms import LoginForm, FormEditReview, FormNewReview, FormEditReviewItem,FormNewReviewItem, DATETIME_FMT_FORM
-from flask import render_template, flash, redirect
+from flask import render_template, flash, redirect, session
 from flask import Flask, jsonify, request, url_for, Response
 from datetime import datetime
 import dateutil.rrule as rrule
 import calendar
+from auth import login_required
 
 
 blueprint = Blueprint('analysis', __name__,
@@ -188,7 +189,7 @@ class Results(object):
 
     def getScoreString(self):
         score = self.getScore()
-        return "Coverage {s:3.1f}% ({rin}/{ri}); number of reviews: {r}, review rate: {arc:3.3f}" \
+        return "Coverage {s:3.1f}% ({r}/{ri}); number of of not reviewed items: {rin}, review rate: {arc:3.3f}" \
                "".format(s=self.getCoverageScore(),
                          ri=self.getReviewItemCount(),
                          rin=self.getReviewItemsWithoutReviewCount(),
@@ -218,7 +219,8 @@ def getResults():
 # routes
 # ===============================================================================
 @blueprint.route('/', methods=['GET', 'POST'])
+@login_required
 def show_analysis():
     userAnalysis = getUserAnalysis()
-    return render_template('analysis.html',userAnalysis=userAnalysis, results= getResults())
+    return render_template('analysis.html',userAnalysis=userAnalysis, results= getResults(), session = session)
 

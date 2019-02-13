@@ -79,7 +79,8 @@ def load_logged_in_user():
 @blueprint.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    #return redirect(url_for('index'))
+    return redirect('/index')
 
 
 def login_required(view):
