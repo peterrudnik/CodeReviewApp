@@ -47,7 +47,7 @@
             <tr>
                 <td><a class ="fa fa-pencil edit-icon" href="/review_item/edit/{{review_item.id}}"></a>
                     <a class ="fa fa-trash trash-icon" href="/review_item/del/{{review_item.id}}"> </a></td>
-                <td><span class="review-item-text">{{review_item.creation_date|datetime('medium')}}</span></td>
+                <td><span class="review-item-text small-text">{{review_item.creation_date|datetime('medium')}}</span></td>
                 <td><span class="review-item-text">{{review_item.name}}</span></td>
                 <td><span class="review-item-text">{{review_item.creator.name}}</span></td>
                 <td><span class="review-item-text">{{review_item.review_type.name}}</span></td>
@@ -60,7 +60,7 @@
                 {% if review_item.reviews|length > 0 %}
                     {% for review in review_item.reviews %}
                         {% if loop.index == 1 %}
-                            <td><span class = "review-text">{{review.review_date|datetime('medium')}}</span></td>
+                            <td><span class = "review-text small-text">{{review.review_date|datetime('medium')}}</span></td>
                             <td><a class ="fa fa-pencil edit-icon" href="/review/edit/{{review.id}}"></a> <a class ="fa fa-trash trash-icon" href="/review/del/{{review.id}}"> </a></td>
                             <td><span class = "review-text">{{review.reviewer.name}}</span></td>
                             {% if review.approved == true %}
@@ -85,7 +85,7 @@
                                 <td></td>
                                 <td></td>
                                  <td></td>
-                                <td><span class = "review-text">{{review.review_date|datetime('medium')}}</span></td>
+                                <td><span class = "review-text small-text">{{review.review_date|datetime('medium')}}</span></td>
                                 <td><a class ="fa fa-pencil edit-icon" href="/review/edit/{{review.id}}"> </a> <a class ="fa fa-trash trash-icon" href="/review/del/{{review.id}}"> </a></td>
                                 <td><span class = "review-text">{{review.reviewer.name}}</span></td>
                                 {% if review.approved == true %}

@@ -17,7 +17,8 @@ def new_review(review_item_id):
     #db = database.get_db()
     review_item = database.getReviewItem(id=review_item_id)
     form = FormNewReview()
-    form.reviewer.choices = [(g.id, g.shortname) for g in database.User.query.order_by('shortname')]
+    #form.reviewer.choices = [(g.id, g.shortname) for g in database.User.query.order_by('shortname')]
+    action_text = "new review for {r}".format(r=review_item.name)
 
     #if form.validate_on_submit():
     if request.method == 'POST':
@@ -26,7 +27,7 @@ def new_review(review_item_id):
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
             return render_template('review_item.html', form=form, session = session)
         else:
-            reviewer = database.getUser(id=form.reviewer.data)
+            reviewer = database.getUser(shortname=form.reviewer.data)
             form_review = database.Review(id=None, approved=form.approved.data,
                                           note=form.note.data,
                                           review_date=datetime.strptime(form.reviewed.data, DATETIME_FMT_FORM),
@@ -37,7 +38,8 @@ def new_review(review_item_id):
             database.addReview(form_review, review_item,reviewer, flash_details = True)
             return render_template('messages.html', session = session)
     elif request.method == 'GET':
-        action_text = "edit review for {r}".format(r=review_item.name)
+        form.reviewer.data = session['user_id']
+        form.reviewed.data = datetime.strftime(datetime.now(), DATETIME_FMT_FORM)
         return render_template('review.html', action = "new", action_text=action_text, form = form, results= view_analysis.getResults(), session = session)
 
 
@@ -48,23 +50,36 @@ def edit_review(id):
     #db = database.get_db()
     form = FormEditReview()
     review = database.getReview(id=id)
+    action_text = "edit review for: {r}".format(r=review.review_item.name)
+    #dt=datetime.strftime(review.review_date, DATETIME_FMT_FORM))
     form.reviewer.choices = [(g.id, g.shortname) for g in database.User.query.order_by('shortname')]
     if request.method == 'GET':
         form.note.data = review.note
-        form.reviewer.data = review.reviewer.id
+        #form.reviewer.data = review.reviewer.id
         form.approved.data = review.approved
         form.note.data = review.note
         form.errors.data = review.errors
         form.duration.data = review.duration
+        form.reviewer.data = review.reviewer_id
+        form.reviewed.data = review.review_date.strftime(DATETIME_FMT_FORM)
 
     #if form.validate_on_submit():
     if request.method == 'POST':
         if form.validate() == False:
             for key, value in form.errors.items():
                 flash("{k}: {v}".format(k=key,v=";".join(value)))  # spits out any and all errors**
-            return render_template('review_item.html', form=form, session = session)
+            return render_template('review.html', action="edit", action_text=action_text, form=form,
+                                   datefmt=DATETIME_FMT_FORM, results=view_analysis.getResults(), session=session)
         else:
             reviewer = database.getUser(id=form.reviewer.data)
+            review.approved = form.approved.data
+            review.note = form.note.data,
+            #review.review_date = form.reviewed.data
+            review.review_date = datetime.strptime(form.reviewed.data, DATETIME_FMT_FORM)
+            review.reviewer_id = reviewer.id
+            review.errors = form.errors.data
+            review.duration = form.duration.data
+            """
             form_review = database.Review(id=review.id, approved=form.approved.data,
                                           note=form.note.data,
                                           review_date=review.review_date,
@@ -73,11 +88,12 @@ def edit_review(id):
                                           errors = form.errors.data,
                                           duration = form.duration.data
                                           )
-            database.updateReview(form_review, flash_details = True)
+            """
+            database.updateReview(review, flash_details = True)
             return render_template('messages.html', session = session)
     elif request.method == 'GET':
-        action_text = "edit review for {r} on {dt}".format(r=review.review_item.name, dt = datetime.strftime(review.review_date,DATETIME_FMT_FORM))
-        return render_template('review.html', action = "edit", action_text=action_text, form = form, results= view_analysis.getResults(), session = session)
+        return render_template('review.html', action = "edit", action_text=action_text, form = form,
+                               datefmt=DATETIME_FMT_FORM,results= view_analysis.getResults(), session = session)
 
 @blueprint.route('/del/<id>', methods=['GET', 'POST'])
 @login_required
@@ -100,6 +116,6 @@ def delete_review(id):
           database.deleteReview(review, flash_details = True)
           return render_template('messages.html', session = session)
     elif request.method == 'GET':
-        action_text = "delete review for {r} on {dt}".format(r=review.review_item.name, dt = datetime.strftime(review.review_date,DATETIME_FMT_FORM))
+        action_text = "delete review for: {r}".format(r=review.review_item.name)
         return render_template('review.html', action = "delete", action_text=action_text, form = form, results= view_analysis.getResults(), session = session)
 

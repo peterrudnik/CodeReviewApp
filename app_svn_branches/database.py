@@ -363,8 +363,10 @@ def flashReview(review):
     myflash(u'reviewed        : {}'.format(review.review_date.strftime(DATETIME_FMT_DISPLAY)))
     reviewer = getUser(id=review.reviewer_id)
     myflash(u'reviewer        : {}'.format(reviewer.shortname))
-    myflash(u'note        : {}'.format(review.note))
     myflash(u'approved        : {}'.format(review.approved))
+    myflash(u'errors          : {}'.format(str(review.errors)))
+    myflash(u'duration        : {}'.format(str(review.duration)))
+    myflash(u'note            : {}'.format(review.note))
 
 
 def addReview(review,review_item, user, flash_details=False):
@@ -402,6 +404,9 @@ def updateReview(review_in, flash_details=False):
             review.reviewer_id = review_in.reviewer_id
             review.note = review_in.note
             review.approved = review_in.approved
+            review.errors = review_in.errors
+            review.duration = review_in.duration
+            #review = copy.deepcopy(review_in)
             db.session.commit()
             myflash("""Updated review "{i}" for {ri}""".format(i=review.review_date.strftime(DATETIME_FMT_DISPLAY),
                                                                ri=review.review_item.name))
@@ -505,6 +510,7 @@ class ImportReviewItem(gencls.Item):
         self.last_commit_dt = last_commit_dt
         self.user_is_new = False
         self.user = None
+        self.confirmed_by_user = False
 
     def toString(self):
         sep = ','
@@ -559,7 +565,7 @@ class ImportReviewItem(gencls.Item):
 
 # -----------------------------------------------------------------------------------------------------------------
 class ImportReview(gencls.Item):
-    def __init__(self, name=None, reviewer_id=None, review_date=None, note=None, review_item_id = None,approved = False ):
+    def __init__(self, name=None, reviewer_id=None, review_date=None, note=None, review_item_id = None,approved = False , uid = None):
         super(gencls.Item, self).__init__()
         self.review = Review(id=None,
                         approved=approved,
@@ -571,6 +577,7 @@ class ImportReview(gencls.Item):
         self.user = None
         self.review_item_is_new = False
         self.review_item = None
+        self.confirmed_by_user = False
 
     def toString(self):
         sep = ','
@@ -696,45 +703,65 @@ def write_reviews(reviews):
 
 # -----------------------------------------------------------------------------------------------------------------
 def import_review_items(review_items):
-    if len(review_items) == 0:
-        myflash(u"No new review items found in repository!")
+    count = 0
+    for import_item in review_items:
+        if import_item.confirmed_by_user == True:
+            count += 1
+    #if len(review_items) == 0:
+    if count == 0:
+        myflash(u"No new review items found!")
+        return
     count_new_review_items = 0
     count_new_users = 0
     for import_item in review_items:
-        #print (import_item.toString())
-        if import_item.user_is_new == True:
-            import_item.review_item.creator_id = addUser(import_item.user)
-            #import_item.user = getUser(shortname=import_item.user.shortname)
-        if addReviewItem(import_item.review_item):
-             count_new_review_items += 1
+        if import_item.confirmed_by_user == True:
+            #print (import_item.toString())
+            if import_item.user_is_new == True:
+                import_item.review_item.creator_id = addUser(import_item.user)
+                #import_item.user = getUser(shortname=import_item.user.shortname)
+            else:
+                import_item.review_item.creator_id = import_item.user.id
+            if addReviewItem(import_item.review_item):
+                 count_new_review_items += 1
 
 def import_reviews(reviews):
-    if len(reviews) == 0:
-        myflash(u"No new reviews found in repository!")
+    count = 0
+    for import_item in reviews:
+        if import_item.confirmed_by_user == True:
+            count += 1
+    #if len(reviews) == 0:
+    if count == 0:
+        myflash(u"No new reviews found!")
+        return
     count_new_reviews = 0
     count_new_users = 0
     for import_item in reviews:
-        #print (import_item.toString())
-        if import_item.user_is_new == True:
-            import_item.user.id = addUser(import_item.user)
-            #creator = getUser(shortname=import_item.user.shortname)
-            import_item.review.reviewer_id = import_item.user.id
-
-        if import_item.review_item is None:
-            myflash(u"Review item not specified for review {dt} by {rv} when importing reviews"
-                    "".format(dt=import_item.review.review_date.strftime(DATETIME_FMT_DISPLAY)))
-            continue
-        if import_item.review_item_is_new == True:
-            review_item = getReviewItem(name = import_item.review_item.name)
-            if review_item is None:
-                myflash(u"Review item not found in database: {r}"
-                        "".format(r=import_item.review_item.name))
-                continue
+        if import_item.confirmed_by_user == True:
+            #print (import_item.toString())
+            if import_item.user_is_new == True:
+                import_item.user.id = addUser(import_item.user)
+                #creator = getUser(shortname=import_item.user.shortname)
+                import_item.review.reviewer_id = import_item.user.id
             else:
-                import_item.review_item.id = review_item.id
+                import_item.review.reviewer_id = import_item.user.id
+
+            if import_item.review_item is None:
+                myflash(u"Review item not specified for review {dt} by {rv} when importing reviews"
+                        "".format(dt=import_item.review.review_date.strftime(DATETIME_FMT_DISPLAY)))
+                continue
+            if import_item.review_item_is_new == True:
+                review_item = getReviewItem(name = import_item.review_item.name)
+                if review_item is None:
+                    myflash(u"Review item not found in database: {r}"
+                            "".format(r=import_item.review_item.name))
+                    continue
+                else:
+                    import_item.review_item.id = review_item.id
+                    import_item.review.review_item_id = import_item.review_item.id
+            else:
                 import_item.review.review_item_id = import_item.review_item.id
-        if addReview(import_item.review, import_item.review_item,import_item.user):
-             count_new_reviews += 1
+            if addReview(import_item.review, import_item.review_item,import_item.user):
+                 count_new_reviews += 1
 
 
 
@@ -837,9 +864,10 @@ def get_update_from_file(has_request=True):
                 if importLine is None:
                     continue
 
+                review_item_is_new = False
                 review_item = getReviewItem(name = importLine.name)
                 if review_item is None:
-                    item.review_item_is_new = True
+                    review_item_is_new = True
                     item = ImportReviewItem()
                     #item.review_item.creation_date = datetime.strptime(importLine.creation_date, DATETIME_FMT_IMPORT)
                     item.review_item.creation_date = getDate(importLine.creation_date)
@@ -862,8 +890,7 @@ def get_update_from_file(has_request=True):
                     # mark for creation of a new user if not exists
                     if item.user is None:
                         item.user_is_new = True
-                        shortname = importLine.creator
-                        item.user = User(id=None, name=shortname, shortname=shortname, note=note_user,
+                        item.user = User(id=None, name=importLine.creator, shortname=importLine.creator, note=note_user,
                                              from_date=item.review_item.creation_date,
                                              to_date=None)
                     else:
@@ -884,6 +911,7 @@ def get_update_from_file(has_request=True):
                 if review_item is not None and importLine.review_date is not None and len(importLine.review_date)>0\
                         and importLine.reviewer is not None and len(importLine.reviewer)>0:
                     item = ImportReview(review_item_id=review_item.id, approved=True)
+                    item.review_item_is_new = review_item_is_new
                     item.review_item = copy.deepcopy(review_item)
                     item.review.review_date = getDate(importLine.review_date)
                     item.review.duration = importLine.duration
@@ -894,10 +922,10 @@ def get_update_from_file(has_request=True):
                     # if we don't have a reviewer there cannot be any reviews
                     # so we only check for existing reviews in the else branch
                     if item.user is None:
-                        shortname = importLine.reviewer
-                        item.user = User(id=None, name=shortname, shortname=shortname, note=note_user,
+                        item.user = User(id=None, name=importLine.reviewer, shortname=importLine.reviewer, note=note_user,
                                              from_date=item.review.review_date,
                                              to_date=None)
+                        item.user_is_new = True
                     else:
                         item.review.reviewer_id = item.user.id
                         #is the reviewalready in? identify by date and user
@@ -927,6 +955,11 @@ def get_update_from_file(has_request=True):
     if len(review_items) > 0:
         # review_item_list_sorted = review_item_list.coll.sort(key = lambda x: x.dt, reverse=False )
         review_items.sort(key=lambda x: x.review_item.creation_date, reverse=False)
+
+    if len(review_items) == 0 and len(reviews) == 0:
+        myflash("No new items found in file: {f}!".format(f=filename))
+        return False, review_items, reviews
+
 
     return True, review_items, reviews
 
@@ -997,10 +1030,12 @@ def get_update_from_repository(has_request=True, skip_export=False):
 
         review_items.add(item)
 
-    if len(review_items) > 0:
+    if len(review_items) == 0:
+        myflash("No new items found in repository: {r}!".format(r=cf.config.get_svn_url()))
+        return False, review_items
+    else:
         # review_item_list_sorted = review_item_list.coll.sort(key = lambda x: x.dt, reverse=False )
         review_items.sort(key=lambda x: x.review_item.creation_date, reverse=False)
-
     # for item in review_item_list:
     #    print(item.toString())
     #import_review_items(review_items)

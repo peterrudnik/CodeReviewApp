@@ -162,7 +162,14 @@ class Results(object):
                 ret += 1
         return ret
 
-    def getScore(self):
+    def getReviewItemsWithReviewCount(self):
+        ret = 0
+        for review_item in self.review_items:
+            if len(review_item.reviews) > 0:
+                ret += 1
+        return ret
+
+    def getPragmaticScore(self):
         n = self.getReviewCount() + self.getReviewItemsWithoutReviewCount()
         if (n) > 0:
             ret = (float(self.getReviewCount()) / float(n)) * 100.0
@@ -172,29 +179,32 @@ class Results(object):
 
     def getCoverageScore(self):
         if self.getReviewItemCount() > 0:
-            f_without = float(self.getReviewItemsWithoutReviewCount())
-            f_count = float(self.getReviewItemCount())
-            ret = ((f_count- f_without) / f_count) * 100.0
+            ret = ( float(self.getReviewItemsWithReviewCount())) / float(self.getReviewItemCount()) * 100.0
         else:
             ret = 0
         return ret
 
-    def getAverageReviewCountScore(self):
+    def getAverageReviewCountScore(self, reviewed_items_only = False):
         average_review_score = 0.0
         if self.getReviewItemCount() > 0:
+            count = 0
             for review_item in self.review_items:
-                average_review_score += review_item.getReviewCount()
-            average_review_score /= float(self.getReviewItemCount())
+                if (reviewed_items_only == False) or (reviewed_items_only == True and review_item.getReviewCount()>0):
+                    count += 1
+                    average_review_score += float(review_item.getReviewCount())
+            #average_review_score /= float(self.getReviewItemCount())
+            average_review_score /= float(count)
         return average_review_score
 
     def getScoreString(self):
-        score = self.getScore()
-        return "Coverage {s:3.1f}% ({r}/{ri}); number of of not reviewed items: {rin}, review rate: {arc:3.3f}" \
-               "".format(s=self.getCoverageScore(),
-                         ri=self.getReviewItemCount(),
-                         rin=self.getReviewItemsWithoutReviewCount(),
+        return "Coverage {s:3.1f}% ({rw}/{rall}); number of not reviewed items: {rwo}, review rate of reviewed items: {arc:3.3f}" \
+               ", pragmatic score {ps}".format(s=self.getCoverageScore(),
+                         rall=self.getReviewItemCount(),
+                         rw=self.getReviewItemsWithReviewCount(),
+                         rwo=self.getReviewItemsWithoutReviewCount(),
                          r=self.getReviewCount(),
-                         arc=self.getAverageReviewCountScore())
+                         arc=self.getAverageReviewCountScore(reviewed_items_only = True),
+                         ps= self.getPragmaticScore())
 
 
 def getResults():

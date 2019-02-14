@@ -40,9 +40,17 @@ def update():
     #db = database.get_db()
     #database.update_from_repository()
     if request.method == 'POST':
-        players = request.form.getlist('check')
-        for player in players:
-            print (player)
+        ret, import_review_items, import_reviews = database.get_update_from_file()
+        form_items = request.form.getlist('check')
+        for import_review_item in import_review_items:
+            if import_review_item.review_item.name in form_items:
+                import_review_item.confirmed_by_user = True
+        for import_review in import_reviews:
+            id = import_review.review_item.name + str(import_review.uid)
+            if id in form_items:
+                import_review.confirmed_by_user = True
+        database.import_review_items(import_review_items)
+        database.import_reviews(import_reviews)
         return render_template('messages.html', session = session)
     else:
         ret, import_review_items, import_reviews = database.get_update_from_file()
@@ -50,7 +58,7 @@ def update():
         #return render_template('messages.html', results=view_analysis.getResults(), session = session)
             return render_template('messages.html', session = session)
         else:
-            return render_template('import.html', import_review_items=import_review_items, session = session)
+            return render_template('import.html', import_review_items=import_review_items, import_reviews=import_reviews, session = session)
     # return render_template('reviewed_items.html', title='Code reviews', data=getData())
 
 @blueprint.route('/about', methods=['GET'])

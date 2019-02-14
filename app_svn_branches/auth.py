@@ -56,7 +56,8 @@ def login():
 
         if error is None:
             session.clear()
-            session['user_id'] = user.id
+            #session['user_id'] = user.id
+            session['user_id'] = user.shortname
             #return redirect(url_for('index'))
             return redirect('/index')
 

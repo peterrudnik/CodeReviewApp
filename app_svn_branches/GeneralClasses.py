@@ -9,7 +9,7 @@ Created on 15 Nov 2018
 
 '''
 import re
-
+from datetime import datetime
 # ===============================================================================
 # general item and ItemColl class
 # ===============================================================================
@@ -82,9 +82,10 @@ class Item(object):
         for x in dir(self):
             if not x.startswith("__"):
                 v = getattr(self, x)
-                if len(s) > 0:
-                    s += ", "
-                s = s + "{k}={v}".format(k=x, v=str(v))
+                if callable(v) == False:
+                    if len(s) > 0:
+                        s += ", "
+                    s = s + "{k}={v}".format(k=x, v=str(v))
         return "{c}, {v}".format(c=self.__class__, v=s)
 
     def __str__(self):
@@ -104,9 +105,12 @@ class ItemColl(object):
         self.name = name
         self._idx = 0
         self.coll = list()
+        self._last_uid = 0
 
     def add(self, item):
         if isinstance(item, Item):
+            self._last_uid += 1
+            item.uid = self._last_uid
             self.coll.append(item)
         else:
             raise ValueError("Trying to add wrong class that is not a descendend of Item!")
@@ -247,3 +251,79 @@ class LineSplitter(object):
             if sub_s:
                 ret.append(sub_s)
         return ret
+
+#===============================================================================
+# test1
+#===============================================================================
+
+class Review(object):
+    def __init__(self, id = None, reviewer_id=None, review_date=None, note=None, review_item_id = None,approved = False):
+        self.id = None
+        self.approved = approved
+        self.note = note
+        self.review_date = review_date
+        self.review_item_id = review_item_id
+        self.reviewer_id = reviewer_id
+
+
+# -----------------------------------------------------------------------------------------------------------------
+class ImportReview(Item):
+    def __init__(self, name=None, reviewer_id=None, review_date=None, note=None, review_item_id = None,approved = False , uid = None):
+        super(Item, self).__init__()
+        self.review = Review(id=None,
+                        approved=approved,
+                        note=note,
+                        review_date=review_date,
+                        review_item_id=review_item_id,
+                        reviewer_id=reviewer_id)
+        self.user_is_new = False
+        self.user = None
+        self.review_item_is_new = False
+        self.review_item = None
+        self.confirmed_by_user = False
+
+    def toString(self):
+        sep = ','
+        s = ""
+        """
+        if self.review.review_date is not None:
+            s += self.review.review_date.strftime("%Y-%m-%d") + sep
+        else:
+            s += "" + sep
+        if self.review.review_item_id is not None:
+            s += str(self.review.review_item_id) + sep
+        else:
+            s += "" + sep
+        if self.review.note is not None:
+            s += self.review.note + sep
+        else:
+            s += "" + sep
+        if self.review.reviewer_id is not None:
+            s += str(self.review.reviewer_id)
+        elif self.user is not None:
+            s += self.user.shortname
+        else:
+            s += ""
+        if self.review.approved is not None and self.review.approved == True:
+            s += "yes" + sep
+        else:
+            s += "no" + sep
+        """
+        return s
+
+    def check(self, importLine):
+        ret = True
+        msg = ""
+        return ret, msg
+
+
+def test1():
+    item = ImportReview(reviewer_id = 1, review_date = datetime.now())
+    print (item.review)
+    print (item)
+
+#===============================================================================
+# controlling functions
+#===============================================================================
+if __name__ == "__main__":
+    test1()

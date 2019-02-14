@@ -7,23 +7,45 @@
         <thead>
             <tr>
                 <th></th>
-                <th>Item</th>
+                <th></th>
+                <th>Review item</th>
+                <th>Review</th>
                 <th>User</th>
             </tr>
         </thead>
         <tbody>
-            {% for import_review_item in import_review_items %}
-                        <tr>
-                            <td>
-                                <div class="checkbox">
-                                  <label><input type="checkbox" name="check" value="{{loop.index}}"  checked></label>
-                                </div>
-                            </td>
-                            <td>{{ import_review_item.review_item.name }}</td>
-                            <td>{{ import_review_item.user.shortname }}</td>
-                            <td>{% if import_review_item.user_is_new == true %}new{% else %}  {% endif %}</td>
-                        </tr>
-             {% endfor %}
+            {% if import_review_items is defined %}
+                {% for import_review_item in import_review_items %}
+                            <tr>
+                                <td>
+                                    <div class="checkbox">
+                                      <label><input type="checkbox" name="check" value="{{import_review_item.review_item.name}}"  checked></label>
+                                    </div>
+                                </td>
+                                <td>{{ import_review_item.uid }}</td>
+                                <td>{{ import_review_item.review_item.name }}</td>
+                                <td></td>
+                                <td>{{ import_review_item.user.shortname }}</td>
+                                <td>{% if import_review_item.user_is_new == true %}new{% else %}  {% endif %}</td>
+                            </tr>
+                 {% endfor %}
+             {% endif %}
+            {% if import_reviews is defined %}
+                {% for import_review in import_reviews %}
+                            <tr class="altrow">
+                                <td>
+                                    <div class="checkbox">
+                                      <label><input type="checkbox" name="check" value="{{import_review.review_item.name ~ import_review.uid}}"  checked></label>
+                                    </div>
+                                </td>
+                                <td>{{ import_review.uid }}</td>
+                                <td>{{ import_review.review_item.name }}</td>
+                                <td>{{ import_review.review.review_date|datetime('medium') }}</td>
+                                <td>{{ import_review.user.shortname }}</td>
+                                <td>{% if import_review.user_is_new == true %}new{% else %}  {% endif %}</td>
+                            </tr>
+                 {% endfor %}
+             {% endif %}
         </tbody>
     </table>
      </form>

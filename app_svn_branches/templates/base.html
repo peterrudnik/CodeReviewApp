@@ -103,6 +103,15 @@
 		  font-size: 12px;
         }
 
+
+        .altrow {
+          background-color: #dddddd;
+        }
+        .small-text {
+          font-size: 9px;
+          background-color: #dddddd;
+        }
+
         .analysis tr:nth-child(even) {
           background-color: #dddddd;
         }
@@ -193,11 +202,15 @@
                       New review item</span></a>
                   <a href="/user"><span  id ="users" class="{{request.path|filterpath('/user')}}">
                       Users</span></a>
-                  <a href="/update"><span  id ="update-from-repository" class="{{request.path|filterpath('/update')}}">
-                      Update from repository</span></a>
+                  {% if session is defined  and session['user_id'] == 'admin' %}
+                      <a href="/update/repository"><span  id ="update-from-repository" class="{{request.path|filterpath('/update/repository')}}">
+                          Update from repository</span></a>
+                      <a href="/update/file"><span  id ="update-from-file" class="{{request.path|filterpath('/update/file')}}">
+                          Update from repository</span></a>
+                  {% endif %}
                   <a href="/about"><span  id ="about" class="{{request.path|filterpath('/about')}}">
                       About</span></a>
-                 {% if session is defined  and 'user_id' in session %}
+                  {% if session is defined  and 'user_id' in session %}
                      <a href="/logout"><span  id ="logout" class="{{request.path|filterpath('/logout')}}">
                           Logout</span></a>
                   {% endif %}

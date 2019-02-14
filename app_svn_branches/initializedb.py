@@ -31,19 +31,20 @@ def create_db(bCreateTestData = False):
         db.session.add(ReviewType(id=8, name=u"website"))
         db.session.add(ReviewType(id=999, name=u"unknown"))
 
+        from_date = datetime(year=2018, month=1, day=1)
+        db.session.add(User(id=1, name=u"admin", shortname=u"admin", note=u"administrator", from_date=None, to_date=None))
         if bCreateTestData:
-            from_date = datetime(year=2018, month=1, day=1)
-            db.session.add(User(id=1, name=u"heinz", shortname=u"hz", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=2, name=u"charlotte", shortname=u"ch", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=3, name=u"werner", shortname=u"wn", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=4, name=u"gabriela", shortname=u"gb", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=5, name=u"marie", shortname=u"mr", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=6, name=u"otto", shortname=u"ot", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=7, name=u"peter", shortname=u"pt", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=8, name=u"monika", shortname=u"mk", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=9, name=u"klaus", shortname=u"kl", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=10, name=u"gernot", shortname=u"gt", note=u"developer", from_date=from_date, to_date=None))
-            db.session.add(User(id=11, name=u"плакучая ива", shortname=u"пи", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=2, name=u"heinz", shortname=u"hz", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=3, name=u"charlotte", shortname=u"ch", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=4, name=u"werner", shortname=u"wn", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=5, name=u"gabriela", shortname=u"gb", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=6, name=u"marie", shortname=u"mr", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=7, name=u"otto", shortname=u"ot", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=8, name=u"peter", shortname=u"pt", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=9, name=u"monika", shortname=u"mk", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=10, name=u"klaus", shortname=u"kl", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=11, name=u"gernot", shortname=u"gt", note=u"developer", from_date=from_date, to_date=None))
+            db.session.add(User(id=12, name=u"плакучая ива", shortname=u"пи", note=u"developer", from_date=from_date, to_date=None))
 
             review_id = 1
             for i in range(1,20):
@@ -92,25 +93,33 @@ def create_db(bCreateTestData = False):
 def update_from_file(has_request= False):
     app = create_app()
     with app.app_context():
-        ret, review_items, reviews = database.get_update_from_file(has_request= has_request)
+        ret, import_review_items, import_reviews = database.get_update_from_file(has_request= has_request)
         if ret == True:
-            database.write_review_items(review_items)
-            database.write_reviews(reviews)
-            database.import_review_items(review_items)
-            database.import_reviews(reviews)
+            # confirmation
+            for import_item in import_review_items:
+                import_item.confirmed_by_user = True
+            for import_item in import_reviews:
+                import_item.confirmed_by_user = True
+            database.write_review_items(import_review_items)
+            database.write_reviews(import_reviews)
+            database.import_review_items(import_review_items)
+            database.import_reviews(import_reviews)
 
 def update_from_repository(has_request= False, skip_export = True):
     app = create_app()
     with app.app_context():
-        ret, review_items = database.get_update_from_repository(has_request= has_request, skip_export = skip_export)
+        ret, import_review_items = database.get_update_from_repository(has_request= has_request, skip_export = skip_export)
         if ret == True:
-            database.write_review_items(review_items)
-            database.import_review_items(review_items)
+            # confirmation
+            for import_item in import_review_items:
+                import_item.confirmed_by_user = True
+            database.write_review_items(import_review_items)
+            database.import_review_items(import_review_items)
 
 #===============================================================================
 # controlling functions
 #===============================================================================
 if __name__ == "__main__":
-    create_db(bCreateTestData = False)
-    update_from_repository()
-    #update_from_file()
+    #create_db(bCreateTestData = False)
+    #update_from_repository()
+    update_from_file()
